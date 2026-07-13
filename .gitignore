@@ -1,0 +1,22 @@
+# Host-specific toolchains and generated output must not enter this repository.
+build/
+dist/
+*.X
+*.o
+*.m68k-gas.s
+lk_tmp/
+
+# Local media images can be large and may contain licensed system software.
+*.xdf
+*.hds
+*.hdf
+
+# Editor / operating-system files
+.vscode/
+.idea/
+Thumbs.db
+.DS_Store
+
+# Host-side assembler build output
+tools/m68kasm/src/M68kAsm/bin/
+tools/m68kasm/src/M68kAsm/obj/

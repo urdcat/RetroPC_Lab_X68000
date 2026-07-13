@@ -1,0 +1,15 @@
+struct Actor {
+  x: word
+  y: word
+  velocity: long
+  flags: byte
+}
+
+[update_actor
+  local dx: word, dy: word
+  d0.w = d1.w + #1 ; dx = d0.w ; dy = d2.w  // 1行に複数の命令
+]/
+
+[finish_frame
+  d0.l += #1
+]
