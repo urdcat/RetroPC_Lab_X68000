@@ -7,18 +7,40 @@ public sealed class LanguageParser
 {
     private static readonly Regex Identifier = new("^[A-Za-z_][A-Za-z0-9_]*$", RegexOptions.Compiled);
     private static readonly Regex ProcedureStart = new("^\\[([A-Za-z_][A-Za-z0-9_]*)$", RegexOptions.Compiled);
-    private static readonly Regex StructureStart = new("^struct\\s+([A-Za-z_][A-Za-z0-9_]*)\\s*\\{$", RegexOptions.Compiled);
+    private static readonly Regex StructureStart = new(
+        "^struct(?:\\s+base\\s*:\\s*(?<base>[aA][0-7]|[sS][pP]))?\\s+(?<name>[A-Za-z_][A-Za-z0-9_]*)\\s*\\{$",
+        RegexOptions.Compiled | RegexOptions.IgnoreCase);
     private static readonly Regex Declaration = new("^([A-Za-z_][A-Za-z0-9_]*)\\s*:\\s*(byte|word|long|ptr)$", RegexOptions.Compiled);
-    private static readonly Regex Algebra = new("^((?:[dD][0-7]\\.(?<size>[bBwWlL]))|(?:[aA][0-6](?:\\.l)?)|[A-Za-z_][A-Za-z0-9_]*)\\s*(=|\\+=|-=)\\s*(.+)$", RegexOptions.Compiled);
+    private static readonly Regex ShortFieldDeclaration = new(
+        "^(?<name>[A-Za-z_][A-Za-z0-9_]*)\\.(?<size>[bBwWlL])$",
+        RegexOptions.Compiled);
+    private static readonly Regex Algebra = new(
+        "^((?:[dD][0-7]\\.(?<size>[bBwWlL]))|(?:[aA][0-7](?:\\.[lL])?)|(?:[A-Za-z_][A-Za-z0-9_]*)(?:\\s*,\\s*[A-Za-z_][A-Za-z0-9_]*)?)\\s*(=|\\+=|-=)\\s*(.+)$",
+        RegexOptions.Compiled);
     private static readonly Regex DataRegister = new("(?<![A-Za-z0-9_])[dD][0-7](?:\\.(?<size>[bBwWlL]))?(?![A-Za-z0-9_])", RegexOptions.Compiled);
     private static readonly Regex DataRegisterAtStart = new("^[dD][0-7](?:\\b|\\.)", RegexOptions.Compiled);
+    private static readonly Regex BitFieldInstructionAtStart = new(
+        @"^(?:bfchg|bfclr|bfexts|bfextu|bfffo|bfins|bfset|bftst)\b",
+        RegexOptions.Compiled | RegexOptions.IgnoreCase);
 
-    public ParseResult Parse(string source)
+    public ParseResult Parse(string source) => Parse(source, sourcePath: null);
+
+    public ParseResult Parse(string source, string? sourcePath)
     {
-        var module = new ModuleSyntax();
-        var diagnostics = new List<SourceDiagnostic>();
+        var preprocessed = new SourcePreprocessor().Process(source, sourcePath);
+        return ParseCore(preprocessed.Source, preprocessed.Constants, preprocessed.Diagnostics);
+    }
+
+    private static ParseResult ParseCore(
+        string source,
+        IReadOnlyDictionary<string, long> constants,
+        IReadOnlyList<SourceDiagnostic> preprocessingDiagnostics)
+    {
+        var module = new ModuleSyntax(constants);
+        var diagnostics = new List<SourceDiagnostic>(preprocessingDiagnostics);
         ProcedureSyntax? procedure = null;
         StructureSyntax? structure = null;
+        var scopes = new Stack<int>();
         var lines = source.Replace("\r\n", "\n", StringComparison.Ordinal).Split('\n');
 
         for (var index = 0; index < lines.Length; index++)
@@ -42,7 +64,46 @@ public sealed class LanguageParser
 
                 if (procedure is not null)
                 {
-                    ParseProcedureStatement(text, procedure, lineNumber, column, diagnostics, ref procedure, module);
+                    if (text == "{")
+                    {
+                        scopes.Push(procedure.CreateScope(scopes.Peek()));
+                        continue;
+                    }
+
+                    if (text == "}")
+                    {
+                        if (scopes.Count == 1)
+                        {
+                            diagnostics.Add(new SourceDiagnostic(lineNumber, column, "対応する'{'がない'}'です"));
+                        }
+                        else
+                        {
+                            scopes.Pop();
+                        }
+
+                        continue;
+                    }
+
+                    if (text is "]" or "]/" && scopes.Count != 1)
+                    {
+                        diagnostics.Add(new SourceDiagnostic(lineNumber, column, "複文を'}'で閉じてから手続きを終了してください"));
+                        continue;
+                    }
+
+                    ParseProcedureStatement(
+                        text,
+                        procedure,
+                        scopes.Peek(),
+                        lineNumber,
+                        column,
+                        diagnostics,
+                        ref procedure,
+                        module);
+                    if (procedure is null)
+                    {
+                        scopes.Clear();
+                    }
+
                     continue;
                 }
 
@@ -55,14 +116,21 @@ public sealed class LanguageParser
                 var structureMatch = StructureStart.Match(text);
                 if (structureMatch.Success)
                 {
-                    var name = structureMatch.Groups[1].Value;
-                    if (module.Structures.Any(item => item.Name.Equals(name, StringComparison.OrdinalIgnoreCase)))
+                    var name = structureMatch.Groups["name"].Value;
+                    if (module.Constants.ContainsKey(name))
+                    {
+                        diagnostics.Add(new SourceDiagnostic(lineNumber, column, $"構造体 '{name}' は同名の定数ラベルと競合します"));
+                    }
+                    else if (module.Structures.Any(item => item.Name.Equals(name, StringComparison.OrdinalIgnoreCase)))
                     {
                         diagnostics.Add(new SourceDiagnostic(lineNumber, column, $"構造体 '{name}' はすでに定義されています"));
                     }
                     else
                     {
-                        structure = new StructureSyntax(name, lineNumber);
+                        var baseRegister = structureMatch.Groups["base"].Success
+                            ? (int?)ParseAddressRegister(structureMatch.Groups["base"].Value)
+                            : null;
+                        structure = new StructureSyntax(name, lineNumber, baseRegister);
                         module.Structures.Add(structure);
                     }
 
@@ -73,13 +141,18 @@ public sealed class LanguageParser
                 if (procedureMatch.Success)
                 {
                     var name = procedureMatch.Groups[1].Value;
-                    if (module.Procedures.Any(item => item.Name.Equals(name, StringComparison.OrdinalIgnoreCase)))
+                    if (module.Constants.ContainsKey(name))
+                    {
+                        diagnostics.Add(new SourceDiagnostic(lineNumber, column, $"手続き '{name}' は同名の定数ラベルと競合します"));
+                    }
+                    else if (module.Procedures.Any(item => item.Name.Equals(name, StringComparison.OrdinalIgnoreCase)))
                     {
                         diagnostics.Add(new SourceDiagnostic(lineNumber, column, $"手続き '{name}' はすでに定義されています"));
                     }
                     else
                     {
                         procedure = new ProcedureSyntax(name, lineNumber);
+                        scopes.Push(0);
                     }
 
                     continue;
@@ -116,26 +189,45 @@ public sealed class LanguageParser
             return;
         }
 
-        var declaration = Declaration.Match(text);
-        if (!declaration.Success)
+        foreach (var part in text.Split(',', StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries))
         {
-            diagnostics.Add(new SourceDiagnostic(line, column, "構造体フィールドは '名前: byte|word|long|ptr' で記述します"));
-            return;
-        }
+            var declaration = Declaration.Match(part);
+            var shortDeclaration = ShortFieldDeclaration.Match(part);
+            if (!declaration.Success && !shortDeclaration.Success)
+            {
+                diagnostics.Add(new SourceDiagnostic(
+                    line,
+                    column,
+                    "構造体フィールドは '名前: byte|word|long|ptr' または '名前.b|.w|.l' で記述します"));
+                continue;
+            }
 
-        var name = declaration.Groups[1].Value;
-        if (current.Fields.Any(item => item.Name.Equals(name, StringComparison.OrdinalIgnoreCase)))
-        {
-            diagnostics.Add(new SourceDiagnostic(line, column, $"フィールド '{name}' はすでに定義されています"));
-            return;
-        }
+            var name = declaration.Success
+                ? declaration.Groups[1].Value
+                : shortDeclaration.Groups["name"].Value;
+            var type = declaration.Success
+                ? declaration.Groups[2].Value
+                : shortDeclaration.Groups["size"].Value.ToLowerInvariant() switch
+                {
+                    "b" => "byte",
+                    "w" => "word",
+                    "l" => "long",
+                    _ => throw new InvalidOperationException(),
+                };
+            if (current.Fields.Any(item => item.Name.Equals(name, StringComparison.OrdinalIgnoreCase)))
+            {
+                diagnostics.Add(new SourceDiagnostic(line, column, $"フィールド '{name}' はすでに定義されています"));
+                continue;
+            }
 
-        current.Fields.Add(new FieldSyntax(name, declaration.Groups[2].Value, line, column));
+            current.Fields.Add(new FieldSyntax(name, type, line, column));
+        }
     }
 
     private static void ParseProcedureStatement(
         string text,
         ProcedureSyntax current,
+        int scopeId,
         int line,
         int column,
         List<SourceDiagnostic> diagnostics,
@@ -171,7 +263,8 @@ public sealed class LanguageParser
                 algebra.Groups[2].Value,
                 algebra.Groups[3].Value.Trim(),
                 line,
-                column));
+                column,
+                scopeId));
             return;
         }
 
@@ -181,7 +274,7 @@ public sealed class LanguageParser
             return;
         }
 
-        current.Statements.Add(new RawStatement(text, line, column));
+        current.Statements.Add(new RawStatement(text, line, column, scopeId));
     }
 
     private static char? GetLocalSize(string name, ProcedureSyntax procedure)
@@ -261,6 +354,7 @@ public sealed class LanguageParser
     {
         var builder = new StringBuilder();
         var inString = false;
+        var inBitField = false;
         var escaped = false;
         var startColumn = 1;
 
@@ -288,6 +382,63 @@ public sealed class LanguageParser
                 continue;
             }
 
+            if (!inString && current == '{'
+                && BitFieldInstructionAtStart.IsMatch(builder.ToString().TrimStart()))
+            {
+                builder.Append(current);
+                inBitField = true;
+                escaped = false;
+                continue;
+            }
+
+            if (!inString && current == '}' && inBitField)
+            {
+                builder.Append(current);
+                inBitField = false;
+                escaped = false;
+                continue;
+            }
+
+            if (!inString && current == '{')
+            {
+                var prefix = builder.ToString();
+                if (prefix.TrimStart().StartsWith("struct ", StringComparison.OrdinalIgnoreCase))
+                {
+                    builder.Append(current);
+                    yield return new StatementPart(builder.ToString(), startColumn);
+                    builder.Clear();
+                    startColumn = index + 2;
+                }
+                else
+                {
+                    if (builder.ToString().Trim().Length != 0)
+                    {
+                        yield return new StatementPart(builder.ToString(), startColumn);
+                    }
+
+                    builder.Clear();
+                    yield return new StatementPart("{", index + 1);
+                    startColumn = index + 2;
+                }
+
+                escaped = false;
+                continue;
+            }
+
+            if (!inString && current == '}')
+            {
+                if (builder.ToString().Trim().Length != 0)
+                {
+                    yield return new StatementPart(builder.ToString(), startColumn);
+                }
+
+                builder.Clear();
+                yield return new StatementPart("}", index + 1);
+                startColumn = index + 2;
+                escaped = false;
+                continue;
+            }
+
             builder.Append(current);
             escaped = current == '\\' && !escaped;
             if (current != '\\')
@@ -306,4 +457,7 @@ public sealed class LanguageParser
     }
 
     private sealed record StatementPart(string Text, int Column);
+
+    private static int ParseAddressRegister(string text) =>
+        text.Equals("sp", StringComparison.OrdinalIgnoreCase) ? 7 : text[1] - '0';
 }

@@ -1,0 +1,12 @@
+m68kasm 0.2.0-preview.1
+
+This package is an internal preview intended to be reused by projects under
+the same development ownership. No public redistribution license has yet been
+declared for the m68kasm source code itself.
+
+Before public distribution, select an explicit license and add the correct
+copyright-holder notice. The bundled .NET runtime notices are provided under
+licenses/dotnet/.
+
+No X68000 software, xdev68k utility, HAS060, HLK, run68, XEiJ, Sega SDK,
+console ROM, BIOS, or target-specific library is included.

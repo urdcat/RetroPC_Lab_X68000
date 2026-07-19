@@ -1,0 +1,17 @@
+include "include/structured_macros.inc"
+
+[structured_demo
+  move.l #$100,a0
+  d0.l = vector,x
+  vector,y = d0.l
+
+  SKIP_ON_NE({
+    SKIP_ON_NE({ nop })
+    nop
+  })
+
+  d1.l = #(1 + 2 * 3)
+  defb $aa, "B"
+  align 4, $ff
+  defw (1 << 2) + 3
+]/

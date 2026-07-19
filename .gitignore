@@ -1,6 +1,7 @@
 # Host-specific toolchains and generated output must not enter this repository.
 build/
 dist/
+work/
 *.X
 *.o
 *.m68k-gas.s
@@ -10,6 +11,11 @@ lk_tmp/
 *.xdf
 *.hds
 *.hdf
+
+# XEiJ is a local development dependency. Its official distribution expands to
+# about 790 MB, so it is fetched reproducibly but never committed or shipped.
+tools/third_party/xeij/XEiJ-*/
+tools/third_party/xeij/XEiJ_*.zip
 
 # Editor / operating-system files
 .vscode/

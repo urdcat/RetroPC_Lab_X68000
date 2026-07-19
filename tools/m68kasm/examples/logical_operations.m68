@@ -1,0 +1,18 @@
+[logical_operations
+  lsl.w #2,d1.w
+  lsr.l #8,d0.l
+  lsl.b d2.l,d3.b
+  lsr.w d4.b,d5.w
+
+  lsl.w (a0)
+  lsr.w 4(a1)
+
+  andi.b #$f0,d0.b
+  andi.w #$1234,(a0)
+  andi.l #$0000ffff,4(a1)
+
+  or.b d0.b,d1.b
+  or.w (a0),d2.w
+  or.l d3.l,(a1)
+  or.w #$00ff,d4.w
+]/

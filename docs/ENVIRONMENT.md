@@ -8,7 +8,7 @@
 | --- | --- | --- |
 | ホスト | Windows + MSYS2 MinGW 64-bit | xdev68k が公式に案内する構成。普段のWindows作業と共存できる。 |
 | X68000 ビルド | xdev68k の run68 + HAS060 + HLK | Motorola記法のアセンブルとリンクで、Human68k の X形式実行ファイルを作る。 |
-| 実行確認 | XEiJ 等のエミュレータ → X68000 Z | PC で高速に反復し、節目で実機との差を確認する。 |
+| 実行確認 | 同梱のXEiJ → X68000 Z | PC で高速に反復し、節目で実機との差を確認する。 |
 | 実機転送 | 所持済みの手段 | `MAIN.X` を Human68k から読める書込み可能な媒体へコピーする。転送方法は無理に置換しない。 |
 | 将来のMD | 68000アセンブラ + MD専用ROMビルド | CPU中核の記述を保ちつつ、ROMヘッダ・VDP・音源だけを置換する。 |
 
@@ -16,6 +16,25 @@ MSYS2 は `C:\\msys64`、xdev68k は MSYS2 のホーム `~/xdev68k`
 （Windows では通常 `C:\\msys64\\home\\<ユーザー名>\\xdev68k`）に置く。ここにはクロス
 ホスト側の `run68` とX68000側の `HAS060.X` / `HLK301.X` はこの外部ツール領域に置くため、
 OneDrive 同期中のリポジトリを重くしない。
+
+## PCエミュレータ
+
+公式配布のXEiJ 0.26.07.08を`tools/third_party/xeij/XEiJ-0.26.07.08/`にローカル導入する。
+展開後は約790MBになるためGit管理しない。未導入の環境では次で公式配布物を取得する。
+
+```powershell
+.\tools\Get-XEiJ.ps1
+```
+
+XEiJの起動には**OpenJDK 26以上**が必要で、Java本体はリポジトリに含めない。
+
+```powershell
+.\tools\Run-XEiJ.ps1
+```
+
+このスクリプトはX68000 EXPERT相当、MC68000、10MHz、2MBメモリ、公式配布物のHuman68k 3.02を指定して
+起動する。エミュレータのライセンス、ソース同梱条件、ホストファイルシステムを使う際の注意は
+[EMULATOR_XEIJ.md](EMULATOR_XEIJ.md)を参照する。
 
 ## アセンブラ環境の構築
 
@@ -38,7 +57,7 @@ export LANG=en_US.UTF-8
 ### 最初の成功条件
 
 ```bash
-cd /c/Users/urdca/OneDrive/Documents/X68000で何か作ろう/src/platform/x68k
+cd /d/work/X68000で何か作ろう/src/platform/x68k
 make
 ```
 

@@ -1,0 +1,21 @@
+WORD_BYTES equ 2
+ROW_WORDS equ SCREEN_WIDTH / WORD_BYTES
+SCREEN_WIDTH equ 320
+ALIGNMENT equ WORD_BYTES * 4
+ALIGN_FILL equ $aa
+MASK equ (1 << 16) - 1
+ENABLED equ ROW_WORDS == 160
+
+[constant_expressions
+  ifasm (ENABLED && MASK == $ffff) {
+    d0.l = #MASK
+  }
+
+  align ALIGNMENT,ALIGN_FILL
+  lsl.w #WORD_BYTES,d0.w
+  andi.l #MASK,d0.l
+  defw ROW_WORDS
+  defl table + WORD_BYTES
+table:
+  nop
+]/

@@ -1,0 +1,15 @@
+[addressing_demo
+  move.l #$00ff0000,a0
+  move.l #$00c00000,a1
+  move.w #2,d1.w
+.loop:
+  move.w (a0)+,d0.w
+  move.w d0.w,(a1)+
+  d1.w -= #1
+  bne.s .loop
+  lea table(pc),a2
+  move.l #table,a3
+  jmp (a2)
+table:
+  dc.w $4e71
+]/

@@ -1,0 +1,15 @@
+[addressing_modes
+  move.b d0.b,-(a0)
+  move.w (a1),d1.w
+  move.l 4(a2),d2.l
+  move.w -8(a3,d3.w),d4.w
+  move.l $1234.w,d5.l
+  move.w $00c00000.l,d6.w
+  move.l table(pc),d7.l
+  move.w table(pc,d0.w),d0.w
+  pea table(pc)
+  jsr $00000100.l
+  rts
+table:
+  dc.l $12345678
+]/
