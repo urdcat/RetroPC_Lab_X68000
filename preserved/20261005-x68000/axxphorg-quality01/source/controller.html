@@ -1,0 +1,40 @@
+<!doctype html><meta charset="utf-8"><title>AxxPhorg X68000 — prototype control</title>
+<style>
+:root{color-scheme:dark}body{background:#101820;color:#d4ecf2;font:15px system-ui;margin:24px}
+main{display:flex;gap:22px;flex-wrap:wrap}img{width:512px;height:512px;image-rendering:pixelated;background:black;border:1px solid #355}
+aside{max-width:400px}h1{font-size:22px;margin-top:0}button{padding:12px;margin:3px;background:#24404d;color:white;border:1px solid #579;border-radius:6px;cursor:pointer}
+button:active{background:#478da4}pre{white-space:pre-wrap;color:#89d4da}small{color:#a8b5ba;display:block;line-height:1.7}#error{color:#ff9473}
+</style>
+<main tabindex="0" id="control"><img id="screen" alt="Actual Champon8 X68000 guest screen"><aside>
+<h1>AxxPhorg / X68000 rich</h1>
+<p>Click this panel, then WASD / arrows to move. Z or Space: fire. Enter: next scene at the stars loop boundary. P: change playlist while stars.</p>
+<p><button data-bit="2">↑ W</button><br><button data-bit="0">← A</button><button data-bit="3">↓ S</button><button data-bit="1">D →</button><br>
+<button data-bit="4">FIRE Z</button><button data-bit="5">NEXT Enter</button><button data-bit="6">PLAYLIST P</button></p>
+<p>Accessible held controls (uncheck to release):<br>
+<label><input type="checkbox" data-hold="0"> Hold left</label>
+<label><input type="checkbox" data-hold="1"> Hold right</label><br>
+<label><input type="checkbox" data-hold="2"> Hold forward</label>
+<label><input type="checkbox" data-hold="3"> Hold backward</label><br>
+<label><input type="checkbox" data-hold="4"> Hold fire</label>
+<label><input type="checkbox" data-hold="5"> Request next scene</label>
+<label><input type="checkbox" data-hold="6"> Select alternate playlist</label>
+<button id="release">Release all inputs</button></p>
+<small>Development software input bridge → this prototype's mailbox only. Native Champon8 X68000 keyboard / real hardware acceptance remains unverified.<br>
+Screen pixels are captured from guest-CPU drawing, not a browser polygon renderer. Background is source256×192 enlarged 2×; not SSAA. Score / victory continuation remains undecided.</small>
+<pre id="status">Connecting…</pre><p id="error"></p><button id="stop">Stop this controller / pause own guest</button>
+</aside></main>
+<script>
+const keyBits={ArrowLeft:0,a:0,A:0,ArrowRight:1,d:1,D:1,ArrowUp:2,w:2,W:2,ArrowDown:3,s:3,S:3,z:4,Z:4,' ':4,Enter:5,p:6,P:6};
+const pressed=new Set(), touch=new Set();let sent=-1,busy=false;const queue=[];
+function mask(){let result=0;for(const key of pressed)result|=1<<keyBits[key];for(const bit of touch)result|=1<<bit;for(const c of document.querySelectorAll('input[data-hold]:checked'))result|=1<<+c.dataset.hold;return result}
+async function send(){const m=mask();if(m!==(queue.length?queue[queue.length-1]:sent))queue.push(m);if(busy)return;busy=true;try{while(queue.length){const next=queue.shift();const r=await fetch('/input',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({mask:next})});if(!r.ok)throw new Error(await r.text());sent=next;document.querySelector('#error').textContent=''}}catch(e){document.querySelector('#error').textContent=e.message;queue.length=0;sent=-1}finally{busy=false}}
+addEventListener('keydown',e=>{if(e.key in keyBits){e.preventDefault();pressed.add(e.key);send()}});
+addEventListener('keyup',e=>{if(e.key in keyBits){e.preventDefault();pressed.delete(e.key);send()}});
+function release(){pressed.clear();touch.clear();for(const c of document.querySelectorAll('input[data-hold]'))c.checked=false;send()}addEventListener('blur',release);document.addEventListener('visibilitychange',()=>{if(document.hidden)release()});
+for(const c of document.querySelectorAll('input[data-hold]'))c.addEventListener('change',send);
+document.querySelector('#release').onclick=release;
+for(const b of document.querySelectorAll('button[data-bit]')){b.addEventListener('pointerdown',e=>{b.setPointerCapture(e.pointerId);touch.add(+b.dataset.bit);send()});b.addEventListener('pointerup',()=>{touch.delete(+b.dataset.bit);send()});b.addEventListener('pointercancel',release)}
+async function refresh(){try{const r=await fetch('/status');if(!r.ok)throw new Error(await r.text());const s=await r.json();document.querySelector('#status').textContent=`Scene ${s.part} / background pose ${s.shownSourceFrame}\nTick ${s.tick} · pages ${s.pages} · 3D poses ${s.poses}\nPlayer (${s.playerX}, ${s.playerZ}) · shots ${s.shotsFired}\nBoss parts ${s.hp.join(' ')} · hits ${s.hits} · defeat event ${s.defeatEvents}`;document.querySelector('#screen').src='/frame.png?t='+Date.now()}catch(e){document.querySelector('#error').textContent=e.message}setTimeout(refresh,350)}
+refresh();document.querySelector('#control').focus();
+document.querySelector('#stop').onclick=async()=>{release();await fetch('/stop',{method:'POST',body:'{}'});document.querySelector('#error').textContent='Controller stopped; shared host and peer tabs remain untouched.'};
+</script>

@@ -1,0 +1,1501 @@
+// Original A/B local image prototype. RAM diagnostic, MC68000, non-SSAA.
+// Renderer is adapted at build time from the immutable native_fast.m68.
+// All geometry is original; poses are rendered by guest instructions.
+REPLAY_DEFAULT equ 0
+SCENE_DEFAULT equ 0
+SCREEN_HEIGHT equ 512
+CTX equ $10000
+SNAPS equ $12000
+BOUNDS equ $12100
+HIST0 equ $12200
+HIST1 equ $12300
+RECTS equ $12400
+INTERVALS equ $12500
+BULLETS equ $11800
+BG equ $40000
+VRAM_BASE equ $c00000
+VRAM_PAGE_1 equ $c80000
+MFP_GPIP equ $e88001
+STATUS_VISIBLE_FACES equ $f0060
+S_READY equ $f0000
+S_TICK equ $f0004
+S_FLIP equ $f0008
+S_SCENE equ $f000c
+S_KEYS equ $f000e
+S_PAUSE equ $f0010
+S_SERVICE equ $f0014
+S_POSES equ $f0018
+S_WRITES equ $f001c
+S_INPUT equ $f0020
+S_MINSP equ $f0024
+S_REPLAY equ $f0028
+S_ERRORS equ $f002a
+S_BULLETTICKS equ $f002c
+S_SCENEGEN equ $f0030
+S_SNAPTICK equ $f0034
+S_SHOWTICK equ $f0038
+S_MISSES equ $f003c
+
+[entry
+  move.w #$2700,sr
+  clr.w $e82600.l
+  clr.w $e80028.l
+  move.w #$00e4,$e82500.l
+  clr.l $e80018.l
+  clr.l $e8001c.l
+  lea palette_words(pc),a0
+  move.l #$e82000,a1
+  moveq #15,d0.l
+.palette:
+  move.w (a0)+,(a1)+
+  dbra d0.w,.palette
+  move.l #CTX,a0
+  move.w #32767,d0.w
+.workzero:
+  clr.l (a0)+
+  dbra d0.w,.workzero
+  move.l #$f0000,a0
+  move.w #1023,d0.w
+.statuszero:
+  clr.l (a0)+
+  dbra d0.w,.statuszero
+  move.l #$ff000,S_MINSP.l
+  move.w #REPLAY_DEFAULT,S_REPLAY.l
+  move.w #SCENE_DEFAULT,S_SCENE.l
+  lea context_templates(pc),a0
+  move.l #CTX,a1
+  moveq #5,d7.l
+.context:
+  moveq #5,d0.l
+.fields:
+  move.l (a0)+,(a1)+
+  dbra d0.w,.fields
+  move.w d7.w,d0.w
+  mulu.w #37,d0.l
+  move.w d0.w,4(a1)
+  adda.w #1000,a1
+  dbra d7.w,.context
+  move.l #BG,a0
+  move.l #131071,d0.l
+.background:
+  clr.l (a0)+
+  subq.l #1,d0.l
+  bpl.s .background
+  lea starfield(pc),a0
+  move.w #159,d7.w
+.star:
+  moveq #0,d0.l
+  move.w (a0)+,d0.w
+  add.w d0.w,d0.w
+  moveq #0,d1.l
+  move.w (a0)+,d1.w
+  lsl.l #8,d1.l
+  lsl.l #2,d1.l
+  add.l d1.l,d0.l
+  move.l #BG,a1
+  adda.l d0.l,a1
+  move.w (a0)+,(a1)
+  dbra d7.w,.star
+  move.l #BG,a0
+  move.l #VRAM_BASE,a1
+  move.l #VRAM_PAGE_1,a2
+  move.l #131071,d0.l
+.initial_pages:
+  move.l (a0)+,d1.l
+  move.l d1.l,(a1)+
+  move.l d1.l,(a2)+
+  subq.l #1,d0.l
+  bpl.s .initial_pages
+  move.w #1,draw_page.l
+  move.w #1,$e82600.l
+  bsr.w update_world
+  move.w #$a55a,S_READY.l
+.worker:
+  bsr.w service
+  moveq #0,d0.l
+  move.w job_index.l,d0.w
+  lsl.l #8,d0.l
+  lsl.l #2,d0.l
+  move.l #CTX,a6
+  adda.l d0.l,a6
+  tst.w 56(a6)
+  beq.w .next
+  tst.w 24(a6)
+  bne.w .next
+  tst.w 26(a6)
+  beq.s .generate
+  move.l S_TICK.l,d0.l
+  sub.l 44(a6),d0.l
+  moveq #11,d1.l
+  cmpi.w #5,job_index.l
+  bne.s .due
+  moveq #28,d1.l
+.due:
+  cmp.l d1.l,d0.l
+  blt.w .next
+.generate:
+  move.l a6,job_context.l
+  bsr.w generate_pose
+.next:
+  addq.w #1,job_index.l
+  cmpi.w #6,job_index.l
+  blt.w .worker
+  clr.w job_index.l
+  bra.w .worker
+]/
+
+// Cooperative interrupt substitute. No renderer state is modified by service.
+[service
+  move.w sr,-(sp)
+  movem.l d0-d7/a0-a6,-(sp)
+  addq.l #1,S_SERVICE.l
+  move.l sp,d0.l
+  cmp.l S_MINSP.l,d0.l
+  bge.s .stack_ok
+  move.l d0.l,S_MINSP.l
+.stack_ok:
+  btst #7,MFP_GPIP.l
+  beq.s .blank
+  clr.w in_blank.l
+  bra.w .compose
+.blank:
+  tst.w in_blank.l
+  bne.w .compose
+  move.w #1,in_blank.l
+  addq.l #1,S_TICK.l
+  tst.w page_ready.l
+  beq.s .no_flip
+  bsr.w publish_page
+.no_flip:
+  bsr.w input_service
+  bsr.w update_world
+  bsr.w update_bullets
+  tst.w composing.l
+  bne.s .miss
+  tst.w page_ready.l
+  bne.s .compose
+  bsr.w start_composite
+  bra.s .compose
+.miss:
+  addq.l #1,S_MISSES.l
+.compose:
+  tst.w composing.l
+  beq.s .exit
+  bsr.w composite_row
+  bra.w .stack_ok
+.exit:
+  movem.l (sp)+,d0-d7/a0-a6
+  move.w (sp)+,ccr
+]
+
+[publish_page
+  moveq #1,d0.l
+  tst.w draw_page.l
+  beq.s .zero
+  moveq #2,d0.l
+.zero:
+  move.w d0.w,$e82600.l
+  move.l S_SNAPTICK.l,S_SHOWTICK.l
+  addq.l #1,S_FLIP.l
+  clr.w page_ready.l
+  eori.w #1,draw_page.l
+]
+
+// Diagnostic MFP character commands are separate from physical held-key input.
+// Uppercase WASD = down, lowercase = up, space/fire on, '.' off, CR pause,
+// '1'/'2' scene, 'R' replay toggle. Current host key-matrix path is NOT accepted.
+[input_service
+  addq.l #1,S_INPUT.l
+  btst #7,$e8802b.l
+  beq.w .replay
+  moveq #0,d0.l
+  move.b $e8802f.l,d0.b
+  lea key_commands(pc),a0
+  moveq #7,d7.l
+.command:
+  cmp.b (a0)+,d0.b
+  beq.w .held
+  addq.l #1,a0
+  dbra d7.w,.command
+  cmpi.b #32,d0.b
+  bne.s .fireoff
+  ori.w #16,S_KEYS.l
+  bra.w .replay
+.fireoff:
+  cmpi.b #46,d0.b
+  bne.s .pause
+  andi.w #$ffef,S_KEYS.l
+  bra.w .replay
+.pause:
+  cmpi.b #13,d0.b
+  bne.s .scene_a
+  eori.w #1,S_PAUSE.l
+  bra.w .replay
+.scene_a:
+  cmpi.b #49,d0.b
+  bne.s .scene_b
+  clr.w S_SCENE.l
+  bra.s .scene_change
+.scene_b:
+  cmpi.b #50,d0.b
+  bne.s .toggle_replay
+  move.w #1,S_SCENE.l
+.scene_change:
+  addq.l #1,S_SCENEGEN.l
+  clr.l scene_age.l
+  clr.w S_PAUSE.l
+  move.l #BULLETS,a0
+  moveq #15,d0.l
+.clear_bullets:
+  clr.l (a0)+
+  dbra d0.w,.clear_bullets
+  bra.s .replay
+.toggle_replay:
+  cmpi.b #82,d0.b
+  bne.s .replay
+  eori.w #1,S_REPLAY.l
+  bra.s .replay
+.held:
+  moveq #0,d1.l
+  move.b (a0),d1.b
+  cmpi.b #97,d0.b
+  bge.s .release
+  bset d1.l,S_KEYS+1.l
+  bra.s .replay
+.release:
+  bclr d1.l,S_KEYS+1.l
+.replay:
+  tst.w S_REPLAY.l
+  beq.s .done
+  // Guest-owned scripted state; never reported as real keyboard evidence.
+  move.w S_TICK+2.l,d0.w
+  andi.w #127,d0.w
+  move.w #17,S_KEYS.l
+  cmpi.w #64,d0.w
+  blt.s .done
+  move.w #18,S_KEYS.l
+.done:
+  cmpi.w #2,S_REPLAY.l
+  bne.s .return
+  bsr.w exercise_script
+.return:
+]
+
+[exercise_script
+  // Diagnostic guest script, NOT hardware or host keyboard input evidence.
+  move.w S_TICK+2.l,d0.w
+  andi.w #127,d0.w
+  clr.w S_PAUSE.l
+  cmpi.w #32,d0.w
+  blt.s .scene
+  cmpi.w #64,d0.w
+  bge.s .scene
+  move.w #1,S_PAUSE.l
+.scene:
+  tst.w d0.w
+  bne.s .done
+  eori.w #1,S_SCENE.l
+  addq.l #1,S_SCENEGEN.l
+  clr.l scene_age.l
+  move.l #BULLETS,a0
+  moveq #15,d0.l
+.clear:
+  clr.l (a0)+
+  dbra d0.w,.clear
+.done:
+]
+
+// A: one four-enemy formation; B: approach then orbit. No pre-rendered poses.
+[update_world
+  addq.l #1,scene_age.l
+  move.l #CTX,a0
+  moveq #0,d7.l
+.object:
+  move.w #1,56(a0)
+  tst.w S_PAUSE.l
+  bne.s .angle_held
+  addq.w #2,28(a0)
+  andi.w #511,28(a0)
+.angle_held:
+  tst.w d7.w
+  bne.w .enemy_or_boss
+  move.w player_x.l,d0.w
+  btst #0,S_KEYS+1.l
+  beq.s .not_left
+  subq.w #2,d0.w
+.not_left:
+  btst #1,S_KEYS+1.l
+  beq.s .not_right
+  addq.w #2,d0.w
+.not_right:
+  cmpi.w #-110,d0.w
+  bge.s .left_ok
+  move.w #-110,d0.w
+.left_ok:
+  cmpi.w #110,d0.w
+  ble.s .right_ok
+  move.w #110,d0.w
+.right_ok:
+  move.w d0.w,player_x.l
+  move.w player_z.l,d1.w
+  btst #2,S_KEYS+1.l
+  beq.s .not_up
+  addq.w #2,d1.w
+.not_up:
+  btst #3,S_KEYS+1.l
+  beq.s .not_down
+  subq.w #2,d1.w
+.not_down:
+  cmpi.w #-200,d1.w
+  bge.s .z_min
+  move.w #-200,d1.w
+.z_min:
+  cmpi.w #-128,d1.w
+  ble.s .z_max
+  move.w #-128,d1.w
+.z_max:
+  move.w d1.w,player_z.l
+  bra.w .project
+.enemy_or_boss:
+  cmpi.w #5,d7.w
+  beq.s .boss
+  tst.w S_SCENE.l
+  beq.s .enemy_active
+  clr.w 56(a0)
+.enemy_active:
+  move.w S_TICK+2.l,d2.w
+  move.w d7.w,d0.w
+  mulu.w #37,d0.l
+  add.w d0.w,d2.w
+  andi.w #255,d2.w
+  add.w d2.w,d2.w
+  lea sine_table(pc),a1
+  move.w 0(a1,d2.w),d0.w
+  asr.w #7,d0.w
+  move.w d7.w,d1.w
+  subq.w #2,d1.w
+  muls.w #80,d1.l
+  add.w d1.w,d0.w
+  move.w S_TICK+2.l,d1.w
+  andi.w #255,d1.w
+  add.w d1.w,d1.w
+  move.w #896,d3.w
+  sub.w d1.w,d3.w
+  move.w d7.w,d1.w
+  mulu.w #32,d1.l
+  add.w d3.w,d1.w
+  bra.s .project
+.boss:
+  tst.w S_SCENE.l
+  bne.s .boss_active
+  clr.w 56(a0)
+.boss_active:
+  move.w scene_age+2.l,d2.w
+  subi.w #128,d2.w
+  bge.s .orbit
+  move.w scene_age+2.l,d1.w
+  mulu.w #6,d1.l
+  neg.w d1.w
+  addi.w #1088,d1.w
+  moveq #0,d0.l
+  bra.s .project
+.orbit:
+  andi.w #255,d2.w
+  add.w d2.w,d2.w
+  lea sine_table(pc),a1
+  move.w 0(a1,d2.w),d0.w
+  asr.w #7,d0.w
+  addi.w #128,d2.w
+  andi.w #511,d2.w
+  move.w 0(a1,d2.w),d1.w
+  asr.w #7,d1.w
+  addi.w #192,d1.w
+.project:
+  // d0=world X,d1=world Z. Camera plane: depth=512+Z, y=-192*Z/depth.
+  move.w d1.w,d2.w
+  addi.w #512,d2.w
+  move.w d2.w,36(a0)
+  muls.w #512,d0.l
+  divs.w d2.w,d0.l
+  addi.w #256,d0.w
+  move.w d0.w,32(a0)
+  muls.w #-192,d1.l
+  divs.w d2.w,d1.l
+  addi.w #256,d1.w
+  move.w d1.w,34(a0)
+  adda.w #1024,a0
+  addq.w #1,d7.w
+  cmpi.w #6,d7.w
+  blt.w .object
+]
+
+[update_bullets
+  addq.l #1,S_BULLETTICKS.l
+  move.l #BULLETS,a0
+  moveq #0,d7.l
+.bullet:
+  tst.w (a0)
+  bne.w .advance
+  move.w S_TICK+2.l,d0.w
+  move.w d7.w,d1.w
+  andi.w #1,d1.w
+  lsl.w #3,d1.w
+  sub.w d1.w,d0.w
+  andi.w #15,d0.w
+  bne.w .next
+  cmpi.w #2,d7.w
+  bge.s .enemy_fire
+  btst #4,S_KEYS+1.l
+  beq.w .next
+  move.w player_x.l,2(a0)
+  move.w player_z.l,4(a0)
+  move.w #28,6(a0)
+  move.w #13,14(a0)
+  bra.s .spawn
+.enemy_fire:
+  move.l #CTX+1024,a1
+  tst.w S_SCENE.l
+  beq.s .origin
+  move.l #CTX+5120,a1
+.origin:
+  // Invert center projection so bullet starts at the source's current center.
+  move.w 32(a1),d0.w
+  subi.w #256,d0.w
+  muls.w 36(a1),d0.l
+  asr.l #8,d0.l
+  asr.l #1,d0.l
+  move.w d0.w,2(a0)
+  move.w 36(a1),d0.w
+  subi.w #512,d0.w
+  move.w d0.w,4(a0)
+  move.w #-12,6(a0)
+  move.w #14,14(a0)
+.spawn:
+  move.w #1,(a0)
+  bra.s .position
+.advance:
+  move.w 6(a0),d0.w
+  add.w d0.w,4(a0)
+.position:
+  move.w 4(a0),d1.w
+  cmpi.w #-260,d1.w
+  blt.s .expire
+  cmpi.w #1500,d1.w
+  bgt.s .expire
+  move.w d1.w,d2.w
+  addi.w #512,d2.w
+  move.w 2(a0),d0.w
+  muls.w #512,d0.l
+  divs.w d2.w,d0.l
+  addi.w #256,d0.w
+  move.w d0.w,8(a0)
+  muls.w #-192,d1.l
+  divs.w d2.w,d1.l
+  addi.w #256,d1.w
+  move.w d1.w,10(a0)
+  move.w #2,12(a0)
+  cmpi.w #1000,d2.w
+  bgt.s .next
+  move.w #4,12(a0)
+  cmpi.w #500,d2.w
+  bgt.s .next
+  move.w #8,12(a0)
+  bra.s .next
+.expire:
+  clr.w (a0)
+.next:
+  adda.w #16,a0
+  addq.w #1,d7.w
+  cmpi.w #4,d7.w
+  blt.w .bullet
+]
+
+[generate_pose
+  move.l job_context.l,a6
+  move.l (a6),render_model.l
+  move.l 4(a6),render_faces.l
+  move.w 8(a6),render_vertex_count.l
+  move.w 10(a6),render_face_count.l
+  move.w 12(a6),render_size.l
+  move.w 14(a6),render_stride.l
+  move.w 12(a6),d0.w
+  lsr.w #1,d0.w
+  move.w d0.w,local_center.l
+  move.w 28(a6),current_angle.l
+  move.w 32(a6),d0.w
+  subi.w #256,d0.w
+  move.w d0.w,pose_view_x.l
+  move.w 34(a6),d0.w
+  subi.w #256,d0.w
+  move.w d0.w,pose_view_y.l
+  move.w 36(a6),pose_depth.l
+  move.l S_TICK.l,48(a6)
+  move.l S_TICK.l,44(a6)
+  move.w current_angle.l,58(a6)
+  move.l 20(a6),draw_vram_base.l
+  clr.w pose_invalid.l
+  lea dirty_span_left(pc),a0
+  move.l a0,dirty_left_pointer.l
+  lea dirty_span_right(pc),a0
+  move.l a0,dirty_right_pointer.l
+  bsr.w pose_clear
+  bsr.w transform_vertices
+  tst.w pose_invalid.l
+  bne.w .invalid
+  bsr.w build_face_order
+  bsr.w sort_face_order
+  bsr.w draw_faces
+  bsr.w cache_bounds
+  bsr.w encode_runs
+  move.l job_context.l,a6
+  addq.w #1,30(a6)
+  move.w #1,24(a6)
+  addq.l #1,S_POSES.l
+  bsr.w pose_done_marker
+  bra.s .done
+.invalid:
+  addq.w #1,S_ERRORS.l
+.done:
+]
+[pose_done_marker
+]
+[cache_bounds
+  move.l job_context.l,a6
+  move.w current_min_x.l,d0.w
+  move.w current_min_y.l,d1.w
+  move.w current_max_x.l,d2.w
+  move.w current_max_y.l,d3.w
+  addq.w #1,d2.w
+  addq.w #1,d3.w
+  tst.w d0.w
+  bpl.s .x
+  clr.w d0.w
+.x:
+  tst.w d1.w
+  bpl.s .y
+  clr.w d1.w
+.y:
+  cmp.w render_size.l,d2.w
+  ble.s .right
+  move.w render_size.l,d2.w
+.right:
+  cmp.w render_size.l,d3.w
+  ble.s .bottom
+  move.w render_size.l,d3.w
+.bottom:
+  move.w d0.w,70(a6)
+  move.w d1.w,72(a6)
+  move.w d2.w,74(a6)
+  move.w d3.w,76(a6)
+  lea 70(a6),a0
+  moveq #3,d7.l
+.clamp:
+  move.w (a0),d0.w
+  bpl.s .nonnegative
+  clr.w d0.w
+.nonnegative:
+  cmp.w render_size.l,d0.w
+  ble.s .bounded
+  move.w render_size.l,d0.w
+.bounded:
+  move.w d0.w,(a0)+
+  dbra d7.w,.clamp
+]
+[pose_clear
+  move.l draw_vram_base.l,a0
+  move.w render_size.l,d7.w
+  mulu.w d7.w,d7.l
+  // Clear color AND coverage together, 16 pixels / 64 bytes per service slice.
+  lsr.w #4,d7.w
+  subq.w #1,d7.w
+.clear:
+  bsr.w service
+  clr.l (a0)+
+  clr.l (a0)+
+  clr.l (a0)+
+  clr.l (a0)+
+  clr.l (a0)+
+  clr.l (a0)+
+  clr.l (a0)+
+  clr.l (a0)+
+  clr.l (a0)+
+  clr.l (a0)+
+  clr.l (a0)+
+  clr.l (a0)+
+  clr.l (a0)+
+  clr.l (a0)+
+  clr.l (a0)+
+  clr.l (a0)+
+  dbra d7.w,.clear
+]
+
+// Tag bit 4 distinguishes opaque index 0 from untouched RAM. Encode once/pose.
+[encode_runs
+  move.l job_context.l,a4
+  move.l draw_vram_base.l,a0
+  move.w render_size.l,d0.w
+  mulu.w d0.w,d0.l
+  move.l a0,a1
+  adda.l d0.l,a1
+  adda.l d0.l,a1
+  move.l a1,a2
+  adda.l d0.l,a2
+  adda.l d0.l,a2
+  move.l a2,a3
+  move.w render_size.l,d0.w
+  lsl.w #2,d0.w
+  adda.w d0.w,a3
+  move.w render_size.l,d7.w
+  subq.w #1,d7.w
+.row:
+  bsr.w service
+  move.l a3,d0.l
+  sub.l draw_vram_base.l,d0.l
+  move.w d0.w,(a2)+
+  clr.w (a2)
+  move.w render_size.l,d0.w
+  subq.w #1,d0.w
+  sub.w d7.w,d0.w
+  cmp.w 72(a4),d0.w
+  blt.w .empty_row
+  cmp.w 76(a4),d0.w
+  bge.w .empty_row
+  move.w 70(a4),d0.w
+  cmp.w 74(a4),d0.w
+  bge.w .empty_row
+  clr.w d5.w
+  move.w 70(a4),d6.w
+  move.w d6.w,d0.w
+  add.w d0.w,d0.w
+  adda.w d0.w,a0
+  adda.w d0.w,a1
+  move.w 74(a4),d4.w
+  sub.w d6.w,d4.w
+  subq.w #1,d4.w
+.pixel:
+  move.w (a0),d0.w
+  andi.w #15,(a0)+
+  btst #4,d0.l
+  beq.s .transparent
+  move.w #$ffff,(a1)+
+  tst.w d5.w
+  bne.s .continued
+  move.b d6.b,(a3)+
+  clr.b (a3)
+  addq.w #1,(a2)
+  move.w #1,d5.w
+.continued:
+  addq.b #1,(a3)
+  bra.s .next
+.transparent:
+  clr.w (a1)+
+  tst.w d5.w
+  beq.s .next
+  addq.l #1,a3
+  clr.w d5.w
+.next:
+  addq.w #1,d6.w
+  move.w d6.w,d0.w
+  andi.w #15,d0.w
+  bne.s .no_service
+  bsr.w service
+.no_service:
+  dbra d4.w,.pixel
+  tst.w d5.w
+  beq.s .row_done
+  addq.l #1,a3
+.row_done:
+  move.w render_size.l,d0.w
+  sub.w 74(a4),d0.w
+  add.w d0.w,d0.w
+  adda.w d0.w,a0
+  adda.w d0.w,a1
+  bra.s .row_next
+.empty_row:
+  adda.w render_stride.l,a0
+  adda.w render_stride.l,a1
+.row_next:
+  addq.l #2,a2
+  dbra d7.w,.row
+]
+
+// Snapshot ten slots (six actors, four bullets); only nine are active in A.
+[start_composite
+  move.l S_TICK.l,S_SNAPTICK.l
+  move.l #SNAPS,a1
+  move.l #CTX,a0
+  moveq #5,d7.l
+.actor:
+  tst.w 24(a0)
+  beq.s .no_new_pose
+  move.l 16(a0),d0.l
+  move.l 20(a0),16(a0)
+  move.l d0.l,20(a0)
+  clr.w 24(a0)
+  move.w #1,26(a0)
+  move.w 30(a0),38(a0)
+  move.l 48(a0),52(a0)
+  move.w 58(a0),60(a0)
+  move.l 70(a0),62(a0)
+  move.l 74(a0),66(a0)
+.no_new_pose:
+  clr.w 4(a1)
+  tst.w 56(a0)
+  beq.s .actor_next
+  tst.w 26(a0)
+  beq.s .actor_next
+  move.w 12(a0),d0.w
+  move.w d0.w,4(a1)
+  lsr.w #1,d0.w
+  move.w 32(a0),d1.w
+  sub.w d0.w,d1.w
+  move.w d1.w,(a1)
+  move.w 34(a0),d1.w
+  sub.w d0.w,d1.w
+  move.w d1.w,2(a1)
+  move.w 36(a0),6(a1)
+  move.l 16(a0),8(a1)
+  move.w 38(a0),14(a1)
+.actor_next:
+  adda.w #1024,a0
+  adda.w #16,a1
+  dbra d7.w,.actor
+  move.l #BULLETS,a0
+  moveq #3,d7.l
+.bullet:
+  clr.w 4(a1)
+  tst.w (a0)
+  beq.s .bullet_next
+  move.w 12(a0),d0.w
+  move.w d0.w,4(a1)
+  lsr.w #1,d0.w
+  move.w 8(a0),d1.w
+  sub.w d0.w,d1.w
+  move.w d1.w,(a1)
+  move.w 10(a0),d1.w
+  sub.w d0.w,d1.w
+  move.w d1.w,2(a1)
+  move.w 4(a0),d0.w
+  addi.w #512,d0.w
+  move.w d0.w,6(a1)
+  clr.l 8(a1)
+  move.w 14(a0),12(a1)
+.bullet_next:
+  adda.w #16,a0
+  adda.w #16,a1
+  dbra d7.w,.bullet
+  // Sort snapshot indices by depth, leaving stable slots/history untouched.
+  lea draw_order(pc),a0
+  moveq #0,d0.l
+  moveq #9,d7.l
+.order_init:
+  move.w d0.w,(a0)+
+  addi.w #16,d0.w
+  dbra d7.w,.order_init
+  bsr.w sort_objects
+  bsr.w snapshot_bounds
+  move.l #HIST0,a4
+  move.l #VRAM_BASE,composite_vram.l
+  tst.w draw_page.l
+  beq.s .page
+  move.l #HIST1,a4
+  move.l #VRAM_PAGE_1,composite_vram.l
+.page:
+  move.l #RECTS,a5
+  clr.w rect_count.l
+  move.l #SNAPS,a3
+  move.l #BOUNDS,a0
+  move.l a4,a1
+  adda.w #160,a1
+  moveq #9,d7.l
+.damage:
+  // Old and new areas, not the full-screen bounding rectangle.
+  move.l (a3),d0.l
+  cmp.l (a4),d0.l
+  bne.s .changed
+  move.l 4(a3),d0.l
+  cmp.l 4(a4),d0.l
+  bne.s .changed
+  move.l 8(a3),d0.l
+  cmp.l 8(a4),d0.l
+  bne.s .changed
+  move.l 12(a3),d0.l
+  cmp.l 12(a4),d0.l
+  beq.w .history
+.changed:
+  // Geometry bounds are frozen with each image, then translated per snapshot.
+  // Physical pages retain their own OLD bounds, not a now-overwritten image.
+  tst.w 4(a3)
+  beq.w .separate_bounds
+  tst.w 4(a4)
+  beq.w .separate_bounds
+  move.w (a0),d0.w
+  cmp.w (a1),d0.w
+  ble.s .union_left
+  move.w (a1),d0.w
+.union_left:
+  move.w 2(a0),d1.w
+  cmp.w 2(a1),d1.w
+  ble.s .union_top
+  move.w 2(a1),d1.w
+.union_top:
+  move.w 4(a0),d3.w
+  cmp.w 4(a1),d3.w
+  bge.s .union_right
+  move.w 4(a1),d3.w
+.union_right:
+  move.w 6(a0),d4.w
+  cmp.w 6(a1),d4.w
+  bge.s .union_bottom
+  move.w 6(a1),d4.w
+.union_bottom:
+  move.w d3.w,d5.w
+  sub.w d0.w,d5.w
+  move.w d4.w,d6.w
+  sub.w d1.w,d6.w
+  mulu.w d6.w,d5.l
+  movem.l d0-d4,-(sp)
+  move.w 4(a0),d0.w
+  sub.w (a0),d0.w
+  move.w 6(a0),d1.w
+  sub.w 2(a0),d1.w
+  mulu.w d1.w,d0.l
+  move.w 4(a1),d1.w
+  sub.w (a1),d1.w
+  move.w 6(a1),d2.w
+  sub.w 2(a1),d2.w
+  mulu.w d2.w,d1.l
+  add.l d1.l,d0.l
+  cmp.l d0.l,d5.l
+  movem.l (sp)+,d0-d4
+  bgt.s .separate_bounds
+  bsr.w add_rectangle.bounds
+  bra.s .history
+.separate_bounds:
+  tst.w 4(a4)
+  beq.s .new_bounds
+  move.w (a1),d0.w
+  move.w 2(a1),d1.w
+  move.w 4(a1),d3.w
+  move.w 6(a1),d4.w
+  bsr.w add_rectangle.bounds
+.new_bounds:
+  tst.w 4(a3)
+  beq.s .history
+  move.w (a0),d0.w
+  move.w 2(a0),d1.w
+  move.w 4(a0),d3.w
+  move.w 6(a0),d4.w
+  bsr.w add_rectangle.bounds
+.history:
+  move.l (a0)+,(a1)+
+  move.l (a0)+,(a1)+
+  move.l (a3)+,(a4)+
+  move.l (a3)+,(a4)+
+  move.l (a3)+,(a4)+
+  move.l (a3)+,(a4)+
+  dbra d7.w,.damage
+  clr.w composite_y.l
+  clr.w composite_phase.l
+  clr.w rectangle_index.l
+  clr.w order_index.l
+  move.w #1,composing.l
+]
+
+[snapshot_bounds
+  move.l #SNAPS,a0
+  move.l #CTX,a1
+  move.l #BOUNDS,a2
+  moveq #9,d7.l
+.object:
+  clr.l (a2)
+  clr.l 4(a2)
+  move.w 4(a0),d3.w
+  beq.s .next
+  moveq #0,d0.l
+  moveq #0,d1.l
+  move.w d3.w,d2.w
+  tst.l 8(a0)
+  beq.s .offset
+  move.w 62(a1),d0.w
+  move.w 64(a1),d1.w
+  move.w 66(a1),d2.w
+  move.w 68(a1),d3.w
+.offset:
+  add.w (a0),d0.w
+  add.w 2(a0),d1.w
+  add.w (a0),d2.w
+  add.w 2(a0),d3.w
+  move.w d0.w,(a2)
+  move.w d1.w,2(a2)
+  move.w d2.w,4(a2)
+  move.w d3.w,6(a2)
+.next:
+  adda.w #16,a0
+  adda.w #1024,a1
+  addq.l #8,a2
+  dbra d7.w,.object
+]
+
+[sort_objects
+  lea draw_order+2(pc),a0
+  moveq #1,d5.l
+.insert:
+  move.w (a0),d0.w
+  move.l #SNAPS,a1
+  move.w 6(a1,d0.w),d1.w
+  move.l a0,a2
+  move.w d5.w,d2.w
+.shift:
+  move.w -2(a2),d3.w
+  cmp.w 6(a1,d3.w),d1.w
+  ble.s .place
+  move.w d3.w,(a2)
+  subq.l #2,a2
+  subq.w #1,d2.w
+  bne.s .shift
+.place:
+  move.w d0.w,(a2)
+  addq.l #2,a0
+  addq.w #1,d5.w
+  cmpi.w #10,d5.w
+  blt.s .insert
+]
+
+// d0=x,d1=y,d2=size; appends clipped [left,top,right,bottom) to a5.
+[add_rectangle
+  tst.w d2.w
+  beq.s .done
+  move.w d0.w,d3.w
+  add.w d2.w,d3.w
+  move.w d1.w,d4.w
+  add.w d2.w,d4.w
+.bounds:
+  tst.w d0.w
+  bpl.s .xok
+  clr.w d0.w
+.xok:
+  tst.w d1.w
+  bpl.s .yok
+  clr.w d1.w
+.yok:
+  cmpi.w #512,d3.w
+  ble.s .rok
+  move.w #512,d3.w
+.rok:
+  cmpi.w #512,d4.w
+  ble.s .bok
+  move.w #512,d4.w
+.bok:
+  cmp.w d3.w,d0.w
+  bge.s .done
+  cmp.w d4.w,d1.w
+  bge.s .done
+  move.w d0.w,(a5)+
+  move.w d1.w,(a5)+
+  move.w d3.w,(a5)+
+  move.w d4.w,(a5)+
+  addq.w #1,rect_count.l
+.done:
+]
+
+// Restore all damaged rectangles, then draw each snapshot object once.
+// Each cooperative call handles one short row, not all objects x all regions.
+[composite_row
+  tst.w rect_count.l
+  beq.w .finished
+  tst.w composite_phase.l
+  bne.w .objects
+  move.w rectangle_index.l,d0.w
+  cmp.w rect_count.l,d0.w
+  bge.w .restored
+  lsl.w #3,d0.w
+  move.l #RECTS,a2
+  adda.w d0.w,a2
+  moveq #0,d0.l
+  move.w 2(a2),d0.w
+  add.w composite_y.l,d0.w
+  lsl.l #8,d0.l
+  lsl.l #2,d0.l
+  moveq #0,d1.l
+  move.w (a2),d1.w
+  add.w d1.w,d1.w
+  add.l d1.l,d0.l
+  move.l #BG,a0
+  adda.l d0.l,a0
+  move.l composite_vram.l,a1
+  adda.l d0.l,a1
+  move.w 6(a2),d7.w
+  sub.w 2(a2),d7.w
+  sub.w composite_y.l,d7.w
+  cmpi.w #4,d7.w
+  ble.s .batch_count
+  moveq #4,d7.l
+.batch_count:
+  add.w d7.w,composite_y.l
+  move.w 4(a2),d0.w
+  sub.w (a2),d0.w
+  move.w d0.w,d6.w
+  move.w #1024,d5.w
+  sub.w d0.w,d5.w
+  sub.w d0.w,d5.w
+  subq.w #1,d7.w
+.restore_batch:
+  move.w d6.w,d0.w
+  bsr.w copy_words
+  adda.w d5.w,a0
+  adda.w d5.w,a1
+  dbra d7.w,.restore_batch
+  move.w 2(a2),d0.w
+  add.w composite_y.l,d0.w
+  cmp.w 6(a2),d0.w
+  blt.w .done
+  clr.w composite_y.l
+  addq.w #1,rectangle_index.l
+  bra.w .done
+.restored:
+  move.w #1,composite_phase.l
+  clr.w composite_y.l
+.objects:
+  move.w order_index.l,d0.w
+  cmpi.w #20,d0.w
+  bge.s .finished
+  lea draw_order(pc),a0
+  move.w 0(a0,d0.w),d0.w
+  move.l #SNAPS,a4
+  adda.w d0.w,a4
+  tst.w 4(a4)
+  beq.s .next_object
+  lsr.w #1,d0.w
+  move.l #BOUNDS,a0
+  adda.w d0.w,a0
+  move.w 6(a0),d0.w
+  sub.w 2(a4),d0.w
+  move.w d0.w,object_end_row.l
+  tst.w composite_y.l
+  bne.s .row_started
+  move.w 2(a0),d0.w
+  sub.w 2(a4),d0.w
+  move.w d0.w,composite_y.l
+.row_started:
+  moveq #3,d7.l
+.blit_batch:
+  bsr.w blit_object_row
+  addq.w #1,composite_y.l
+  move.w composite_y.l,d0.w
+  cmp.w object_end_row.l,d0.w
+  bge.s .next_object
+  dbra d7.w,.blit_batch
+  bra.s .done
+.next_object:
+  clr.w composite_y.l
+  addq.w #2,order_index.l
+  bra.s .done
+.finished:
+  clr.w composing.l
+  move.w #1,page_ready.l
+  bsr.w composite_done_marker
+.done:
+]
+
+// Kept as a measured slow baseline; the service never calls this routine.
+[composite_interval_row_reference
+  move.w composite_y.l,d6.w
+  move.w #512,d5.w
+  move.l #RECTS,a0
+  move.l #INTERVALS,a1
+  moveq #0,d4.l
+  move.w rect_count.l,d7.w
+  subq.w #1,d7.w
+  bmi.w .finished
+.gather:
+  cmp.w 2(a0),d6.w
+  blt.s .future
+  cmp.w 6(a0),d6.w
+  bge.s .rect_next
+  move.w (a0),(a1)+
+  move.w 4(a0),(a1)+
+  addq.w #1,d4.w
+  bra.s .rect_next
+.future:
+  move.w 2(a0),d0.w
+  cmp.w d5.w,d0.w
+  bge.s .rect_next
+  move.w d0.w,d5.w
+.rect_next:
+  addq.l #8,a0
+  dbra d7.w,.gather
+  tst.w d4.w
+  bne.s .nonempty
+  cmpi.w #512,d5.w
+  bge.w .finished
+  move.w d5.w,composite_y.l
+  bra.w .done
+.nonempty:
+  move.w d4.w,interval_count.l
+  move.l #INTERVALS+4,a0
+  moveq #1,d5.l
+.sort:
+  cmp.w d4.w,d5.w
+  bge.s .merged_start
+  move.l (a0),d0.l
+  move.w (a0),d1.w
+  move.l a0,a1
+  move.w d5.w,d2.w
+.shift:
+  cmp.w -4(a1),d1.w
+  bge.s .place
+  move.l -4(a1),(a1)
+  subq.l #4,a1
+  subq.w #1,d2.w
+  bne.s .shift
+.place:
+  move.l d0.l,(a1)
+  addq.l #4,a0
+  addq.w #1,d5.w
+  bra.s .sort
+.merged_start:
+  move.l #INTERVALS,interval_cursor.l
+.union:
+  move.l interval_cursor.l,a0
+  move.w (a0)+,clip_left.l
+  move.w (a0)+,d1.w
+  subq.w #1,interval_count.l
+.merge:
+  tst.w interval_count.l
+  beq.s .draw
+  cmp.w (a0),d1.w
+  blt.s .draw
+  cmp.w 2(a0),d1.w
+  bge.s .right_ok
+  move.w 2(a0),d1.w
+.right_ok:
+  addq.l #4,a0
+  subq.w #1,interval_count.l
+  bra.s .merge
+.draw:
+  move.w d1.w,clip_right.l
+  move.l a0,interval_cursor.l
+  bsr.w compose_interval
+  tst.w interval_count.l
+  bne.s .union
+  addq.w #1,composite_y.l
+  bra.s .done
+.finished:
+  clr.w composing.l
+  move.w #1,page_ready.l
+  bsr.w composite_done_marker
+.done:
+]
+[composite_done_marker
+]
+
+[blit_object_row
+  moveq #0,d0.l
+  move.w 2(a4),d0.w
+  add.w composite_y.l,d0.w
+  bmi.w .done
+  cmpi.w #512,d0.w
+  bge.w .done
+  lsl.l #8,d0.l
+  lsl.l #2,d0.l
+  move.l composite_vram.l,a1
+  adda.l d0.l,a1
+  move.l a1,line_vram.l
+  clr.w clip_left.l
+  move.w #512,clip_right.l
+  move.w (a4),d0.w
+  move.w d0.w,d1.w
+  add.w 4(a4),d1.w
+  tst.w d1.w
+  ble.w .done
+  cmpi.w #512,d0.w
+  bge.w .done
+  tst.l 8(a4)
+  bne.s .image
+  bsr.w clip_span
+  move.w 12(a4),d2.w
+  bsr.w solid_words
+  bra.w .done
+.image:
+  moveq #0,d3.l
+  move.w 4(a4),d3.w
+  mulu.w d3.w,d3.l
+  lsl.l #2,d3.l
+  moveq #0,d4.l
+  move.w composite_y.l,d4.w
+  lsl.w #2,d4.w
+  add.l d4.l,d3.l
+  move.l 8(a4),a0
+  adda.l d3.l,a0
+  moveq #0,d0.l
+  move.w (a0)+,d0.w
+  move.w (a0),runs_remaining.l
+  beq.w .done
+  move.l 8(a4),a2
+  adda.l d0.l,a2
+  move.l a2,run_cursor.l
+  move.w composite_y.l,d4.w
+  mulu.w 4(a4),d4.l
+  add.l d4.l,d4.l
+  move.l 8(a4),a3
+  adda.l d4.l,a3
+  move.l a3,image_row.l
+.run:
+  move.l run_cursor.l,a2
+  moveq #0,d0.l
+  moveq #0,d1.l
+  move.b (a2)+,d0.b
+  move.b (a2)+,d1.b
+  move.l a2,run_cursor.l
+  add.w (a4),d0.w
+  add.w d0.w,d1.w
+  tst.w d1.w
+  ble.s .next
+  cmpi.w #512,d0.w
+  bge.s .next
+  bsr.w clip_span
+  sub.w (a4),d1.w
+  add.w d1.w,d1.w
+  move.l image_row.l,a0
+  adda.w d1.w,a0
+  bsr.w copy_words
+.next:
+  subq.w #1,runs_remaining.l
+  bne.s .run
+.done:
+]
+
+[compose_interval
+  moveq #0,d0.l
+  move.w composite_y.l,d0.w
+  lsl.l #8,d0.l
+  lsl.l #2,d0.l
+  move.l composite_vram.l,a1
+  adda.l d0.l,a1
+  move.l a1,line_vram.l
+  move.l #BG,a0
+  adda.l d0.l,a0
+  move.w clip_left.l,d0.w
+  add.w d0.w,d0.w
+  adda.w d0.w,a0
+  adda.w d0.w,a1
+  move.w clip_right.l,d0.w
+  sub.w clip_left.l,d0.w
+  bsr.w copy_words
+  clr.w order_index.l
+.object:
+  move.w order_index.l,d0.w
+  lea draw_order(pc),a0
+  move.w 0(a0,d0.w),d0.w
+  move.l #SNAPS,a4
+  adda.w d0.w,a4
+  move.w 4(a4),d3.w
+  beq.w .next
+  move.w composite_y.l,d4.w
+  sub.w 2(a4),d4.w
+  bmi.w .next
+  cmp.w d3.w,d4.w
+  bge.w .next
+  move.w (a4),d0.w
+  move.w d0.w,d1.w
+  add.w d3.w,d1.w
+  cmp.w clip_left.l,d1.w
+  ble.w .next
+  cmp.w clip_right.l,d0.w
+  bge.w .next
+  tst.l 8(a4)
+  bne.s .image
+  move.w 12(a4),d2.w
+  bsr.w clip_span
+  bsr.w solid_words
+  bra.w .next
+.image:
+  move.l 8(a4),a0
+  move.w d3.w,d0.w
+  mulu.w d0.w,d0.l
+  lsl.l #2,d0.l
+  adda.l d0.l,a0
+  move.w d4.w,d0.w
+  lsl.w #2,d0.w
+  adda.w d0.w,a0
+  moveq #0,d0.l
+  move.w (a0)+,d0.w
+  move.w (a0),runs_remaining.l
+  beq.w .next
+  move.l 8(a4),a2
+  adda.l d0.l,a2
+  move.l a2,run_cursor.l
+  mulu.w d3.w,d4.l
+  add.l d4.l,d4.l
+  move.l 8(a4),a3
+  adda.l d4.l,a3
+  move.l a3,image_row.l
+.run:
+  move.l run_cursor.l,a2
+  moveq #0,d0.l
+  moveq #0,d1.l
+  move.b (a2)+,d0.b
+  move.b (a2)+,d1.b
+  move.l a2,run_cursor.l
+  add.w (a4),d0.w
+  add.w d0.w,d1.w
+  cmp.w clip_left.l,d1.w
+  ble.s .run_next
+  cmp.w clip_right.l,d0.w
+  bge.s .run_next
+  bsr.w clip_span
+  // clipped destination X remains in d1; derive corresponding source X.
+  sub.w (a4),d1.w
+  add.w d1.w,d1.w
+  move.l image_row.l,a0
+  adda.w d1.w,a0
+  bsr.w copy_words
+.run_next:
+  subq.w #1,runs_remaining.l
+  bne.s .run
+.next:
+  addq.w #2,order_index.l
+  cmpi.w #20,order_index.l
+  blt.w .object
+]
+
+// input d0 left,d1 right; output count d0,left d1,destination a1.
+[clip_span
+  cmp.w clip_left.l,d0.w
+  bge.s .left
+  move.w clip_left.l,d0.w
+.left:
+  cmp.w clip_right.l,d1.w
+  ble.s .right
+  move.w clip_right.l,d1.w
+.right:
+  move.w d0.w,d4.w
+  sub.w d0.w,d1.w
+  move.w d1.w,d0.w
+  move.w d4.w,d1.w
+  add.w d4.w,d4.w
+  move.l line_vram.l,a1
+  adda.w d4.w,a1
+]
+
+[copy_words
+  movem.l d1-d2,-(sp)
+  moveq #0,d1.l
+  move.w d0.w,d1.w
+  add.l d1.l,d1.l
+  add.l d1.l,S_WRITES.l
+  move.w d0.w,d1.w
+  lsr.w #4,d1.w
+  beq.s .tail
+  subq.w #1,d1.w
+.burst:
+  move.l (a0)+,(a1)+
+  move.l (a0)+,(a1)+
+  move.l (a0)+,(a1)+
+  move.l (a0)+,(a1)+
+  move.l (a0)+,(a1)+
+  move.l (a0)+,(a1)+
+  move.l (a0)+,(a1)+
+  move.l (a0)+,(a1)+
+  dbra d1.w,.burst
+.tail:
+  andi.w #15,d0.w
+  beq.s .done
+  subq.w #1,d0.w
+.word:
+  move.w (a0)+,(a1)+
+  dbra d0.w,.word
+.done:
+  movem.l (sp)+,d1-d2
+]
+[solid_words
+  moveq #0,d1.l
+  move.w d0.w,d1.w
+  add.l d1.l,d1.l
+  add.l d1.l,S_WRITES.l
+  subq.w #1,d0.w
+.word:
+  move.w d2.w,(a1)+
+  dbra d0.w,.word
+]
+
+include "LOCAL_RENDERER"
+include "LOCAL_ASSETS"
+
+[local_data
+job_index:
+  defw 0
+job_context:
+  defl CTX
+render_model:
+  defl 0
+render_faces:
+  defl 0
+render_vertex_count:
+  defw 0
+render_face_count:
+  defw 0
+render_size:
+  defw 16
+render_stride:
+  defw 32
+local_center:
+  defw 8
+pose_depth:
+  defw 512
+pose_rotated_z:
+  defw 0
+pose_view_x:
+  defw 0
+pose_view_y:
+  defw 0
+pose_invalid:
+  defw 0
+in_blank:
+  defw 0
+composing:
+  defw 0
+page_ready:
+  defw 0
+composite_vram:
+  defl VRAM_PAGE_1
+composite_y:
+  defw 0
+composite_phase:
+  defw 0
+rectangle_index:
+  defw 0
+object_end_row:
+  defw 0
+rect_count:
+  defw 0
+interval_count:
+  defw 0
+interval_cursor:
+  defl INTERVALS
+clip_left:
+  defw 0
+clip_right:
+  defw 0
+line_vram:
+  defl 0
+order_index:
+  defw 0
+runs_remaining:
+  defw 0
+run_cursor:
+  defl 0
+image_row:
+  defl 0
+player_x:
+  defw 0
+player_z:
+  defw -192
+scene_age:
+  defl 0
+draw_order:
+  defw 0,0,0,0,0,0,0,0,0,0
+key_commands:
+  defb 65,0,68,1,87,2,83,3,97,0,100,1,119,2,115,3
+]/

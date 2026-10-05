@@ -1,0 +1,424 @@
+// v2 addendum. Phase age is independent of the wrapping v1 angle clock.
+// Native logical tick ~=55.4509Hz: ceil(15*tickHz)=832 (15.004s).
+C_DWELL_TICKS equ 832
+
+[cycle_reset
+  clr.w cycle_phase.l
+  clr.w cycle_age.l
+  clr.w cycle_active.l
+  clr.w cycle_loop_request.l
+  clr.w cycle_cancelled.l
+  clr.w cycle_wait_image.l
+  clr.w page_boss_present.l
+  move.w #C_DWELL_TICKS,cycle_dwell_limit.l
+  bsr.w cycle_invalidate
+  clr.w cycle_wait_image.l
+]
+
+[cycle_invalidate
+  addq.w #1,cycle_epoch.l
+  clr.w page_ready.l
+  clr.w composing.l
+  clr.w page_boss_present.l
+  move.w #1,cycle_wait_image.l
+  move.l #$00010001,cycle_full_damage.l
+  move.l #HIST0,a0
+  moveq #127,d0.l
+.history:
+  clr.l (a0)+
+  dbra d0.w,.history
+  move.l #CTX,a0
+  moveq #5,d0.l
+.pending:
+  clr.w 24(a0)
+  adda.w #1024,a0
+  dbra d0.w,.pending
+]
+
+// Called after key edges, before any ready page can be published.
+[cycle_tick
+  cmpi.w #5,S_SCENE.l
+  beq.w .cancel
+  tst.w boss_restart.l
+  bne.w .cancel
+  cmpi.w #4,S_SCENE.l
+  bne.w .done
+  tst.w cycle_loop_request.l
+  bne.w .done
+  move.w cycle_phase.l,d0.w
+  cmpi.w #1,d0.w
+  beq.w .dwell
+  cmpi.w #4,d0.w
+  beq.w .terminal
+  move.w #256,d1.w
+  cmpi.w #2,d0.w
+  bne.w .limit
+  moveq #64,d1.l
+.limit:
+  cmp.w cycle_age.l,d1.w
+  ble.w .done
+  addq.w #1,cycle_age.l
+  bra.w .done
+.dwell:
+  move.w cycle_dwell_limit.l,d1.w
+  cmp.w cycle_age.l,d1.w
+  ble.w .join
+  addq.w #1,cycle_age.l
+  cmp.w cycle_age.l,d1.w
+  bne.w .done
+.join:
+  move.l S_TOTALTICKS.l,cycle_join_started.l
+  move.w cycle_last_x.l,d0.w
+  subi.w #128,d0.w
+  move.w d0.w,cycle_join_dx.l
+  move.w cycle_last_depth.l,cycle_join_depth.l
+  move.w #2,cycle_phase.l
+  clr.w cycle_age.l
+  clr.w S_INTRO.l
+  bsr.w clear_bullets
+  bsr.w cycle_invalidate
+  bra.w .done
+.terminal:
+  move.w #1,cycle_age.l
+  move.w #1,cycle_loop_request.l
+  bsr.w cycle_invalidate
+  bra.w .done
+.cancel:
+  tst.w cycle_cancelled.l
+  bne.w .done
+  move.w #1,cycle_cancelled.l
+  bsr.w cycle_invalidate
+.done:
+]
+
+[cycle_auto_reset
+  move.w player_x.l,-(sp)
+  move.w player_z.l,-(sp)
+  move.w S_CHOICE.l,-(sp)
+  move.w S_PAUSE.l,-(sp)
+  bsr.w reset_game
+  move.w (sp)+,S_PAUSE.l
+  move.w (sp)+,S_CHOICE.l
+  move.w (sp)+,player_z.l
+  move.w (sp)+,player_x.l
+  addq.l #1,cycle_loops.l
+  bsr.w update_world
+]
+
+[init_boss
+  // Normal encounters preserve pause; explicit F2 is the only local release.
+  tst.w boss_restart.l
+  beq.w .keep_pause
+  clr.w S_PAUSE.l
+.keep_pause:
+  clr.w boss_restart.l
+  clr.w cycle_cancelled.l
+  clr.w cycle_loop_request.l
+  addq.l #1,S_REAPPEAR.l
+  clr.l S_TICK.l
+  clr.w S_INTRO.l
+  clr.w cycle_phase.l
+  clr.w cycle_age.l
+  move.w S_CHOICE.l,cycle_active.l
+  clr.w S_MASKLEVEL.l
+  clr.w mask_done.l
+  move.w #4,S_SCENE.l
+  move.l #CTX,a0
+  moveq #5,d7.l
+.contexts:
+  clr.w 24(a0)
+  clr.w 26(a0)
+  clr.w 30(a0)
+  adda.w #1024,a0
+  dbra d7.w,.contexts
+  clr.w CTX+5120+28.l
+  move.w #1,CTX+5120+56.l
+  bsr.w clear_bullets
+  bsr.w cycle_invalidate
+  bsr.w update_world
+]
+
+// Return d1=x, d0=y, d2=depth. Exactly v2 trunc/floor conventions.
+[cycle_pose
+  move.w cycle_phase.l,d3.w
+  move.w cycle_age.l,d4.w
+  cmpi.w #1,d3.w
+  beq.w .dwell
+  cmpi.w #2,d3.w
+  beq.w .join
+  move.w #128,d1.w
+  moveq #112,d2.l
+  moveq #80,d0.l
+  tst.w cycle_active.l
+  bne.w .done
+  cmpi.w #256,d4.w
+  ble.w .age_ok
+  move.w #256,d4.w
+.age_ok:
+  cmpi.w #4,d3.w
+  bne.w .not_terminal
+  move.w #256,d4.w
+.not_terminal:
+  tst.w d3.w
+  bne.w .exit
+  move.w #368,d2.w
+  sub.w d4.w,d2.w
+  lsr.w #2,d4.w
+  move.w #16,d0.w
+  add.w d4.w,d0.w
+  bra.w .done
+.exit:
+  add.w d4.w,d2.w
+  lsr.w #2,d4.w
+  sub.w d4.w,d0.w
+  bra.w .done
+.dwell:
+  lsr.w #3,d4.w
+  andi.w #63,d4.w
+  add.w d4.w,d4.w
+  lea sine_table(pc),a0
+  move.w 0(a0,d4.w),d1.w
+  muls.w #40,d1.l
+  asr.l #8,d1.l
+  addi.w #128,d1.w
+  addi.w #32,d4.w
+  andi.w #127,d4.w
+  move.w 0(a0,d4.w),d2.w
+  asr.w #3,d2.w
+  neg.w d2.w
+  addi.w #144,d2.w
+  bra.w .derived_y
+.join:
+  cmpi.w #64,d4.w
+  ble.w .join_age
+  moveq #64,d4.l
+.join_age:
+  neg.w d4.w
+  addi.w #64,d4.w
+  move.w cycle_join_dx.l,d1.w
+  muls.w d4.w,d1.l
+  divs.w #64,d1.l
+  addi.w #128,d1.w
+  move.w cycle_join_depth.l,d2.w
+  subi.w #112,d2.w
+  muls.w d4.w,d2.l
+  divs.w #64,d2.l
+  addi.w #112,d2.w
+.derived_y:
+  move.w d2.w,d0.w
+  subi.w #112,d0.w
+  asr.w #1,d0.w
+  neg.w d0.w
+  addi.w #80,d0.w
+.done:
+]
+
+// Return -1 for no warp mask, otherwise Bayer level0..16.
+[cycle_mask_level
+  moveq #-1,d0.l
+  cmpi.w #4,S_SCENE.l
+  bne.w .done
+  tst.w cycle_active.l
+  beq.w .done
+  move.w cycle_phase.l,d1.w
+  cmpi.w #4,d1.w
+  beq.w .black
+  tst.w d1.w
+  beq.w .age
+  cmpi.w #3,d1.w
+  bne.w .done
+.age:
+  move.w cycle_age.l,d0.w
+  cmpi.w #256,d0.w
+  ble.w .clamped
+  move.w #256,d0.w
+.clamped:
+  lsr.w #4,d0.w
+  tst.w d1.w
+  beq.w .done
+  neg.w d0.w
+  addi.w #16,d0.w
+  bra.w .done
+.black:
+  moveq #0,d0.l
+.done:
+]
+
+// Can return to generation without allowing a stale hidden page to publish.
+[cycle_can_compose
+  moveq #0,d0.l
+  cmpi.w #5,S_SCENE.l
+  beq.w .done
+  tst.w boss_restart.l
+  bne.w .done
+  tst.w cycle_loop_request.l
+  bne.w .done
+  tst.w cycle_wait_image.l
+  beq.w .allow
+  tst.w CTX+5120+24.l
+  beq.w .done
+  move.w CTX+5120+124.l,d1.w
+  cmp.w cycle_epoch.l,d1.w
+  bne.w .done
+  clr.w cycle_wait_image.l
+.allow:
+  moveq #1,d0.l
+.done:
+]
+
+[cycle_capture_page
+  move.w cycle_epoch.l,page_cycle_epoch.l
+  clr.w page_boss_present.l
+  tst.w SNAPS+84.l
+  beq.w .done
+  move.w #1,page_boss_present.l
+  move.w CTX+5120+134.l,page_cycle_phase.l
+  move.w CTX+5120+136.l,page_cycle_age.l
+  move.w CTX+5120+138.l,page_pose_epoch.l
+  move.w CTX+5120+140.l,page_boss_x.l
+  move.w CTX+5120+144.l,page_boss_depth.l
+.done:
+]
+
+// Invoked only AFTER the actual VBlank page flip has completed.
+[cycle_published
+  tst.w page_boss_present.l
+  beq.w .done
+  cmpi.w #4,S_SCENE.l
+  bne.w .done
+  move.w page_pose_epoch.l,d0.w
+  cmp.w cycle_epoch.l,d0.w
+  bne.w .done
+  move.w page_cycle_phase.l,d0.w
+  cmp.w cycle_phase.l,d0.w
+  bne.w .done
+  move.w page_boss_x.l,cycle_last_x.l
+  move.w page_boss_depth.l,cycle_last_depth.l
+  move.w #256,d1.w
+  tst.w d0.w
+  beq.w .endpoint
+  cmpi.w #2,d0.w
+  bne.w .exit_check
+  moveq #64,d1.l
+  bra.w .endpoint
+.exit_check:
+  cmpi.w #3,d0.w
+  bne.w .done
+.endpoint:
+  cmp.w page_cycle_age.l,d1.w
+  bne.w .done
+  tst.w cycle_active.l
+  beq.w .transition
+  tst.w d0.w
+  bne.w .warp_exit
+  cmpi.w #16,mask_level_snapshot.l
+  bne.w .done
+  bra.w .transition
+.warp_exit:
+  cmpi.w #3,d0.w
+  bne.w .transition
+  tst.w mask_level_snapshot.l
+  bne.w .done
+.transition:
+  addq.w #1,cycle_phase.l
+  clr.w cycle_age.l
+  clr.w S_INTRO.l
+  cmpi.w #1,cycle_phase.l
+  bne.w .not_dwell
+  move.w #1,S_INTRO.l
+  move.l S_TOTALTICKS.l,cycle_dwell_started.l
+.not_dwell:
+  addq.l #1,cycle_endpoints.l
+  move.w page_cycle_phase.l,cycle_last_endpoint_phase.l
+  move.w page_cycle_age.l,cycle_last_endpoint_age.l
+  bsr.w cycle_invalidate
+.done:
+]
+
+[cycle_job_accept
+  moveq #0,d0.l
+  cmpi.w #5,S_SCENE.l
+  beq.w .done
+  tst.w boss_restart.l
+  bne.w .done
+  tst.w cycle_loop_request.l
+  bne.w .done
+  move.l job_context.l,a6
+  move.w 124(a6),d1.w
+  cmp.w cycle_epoch.l,d1.w
+  bne.w .done
+  moveq #1,d0.l
+.done:
+]
+
+[cycle_full_rectangle
+  move.w draw_page.l,d0.w
+  add.w d0.w,d0.w
+  lea cycle_full_damage(pc),a0
+  tst.w 0(a0,d0.w)
+  beq.w .done
+  clr.w 0(a0,d0.w)
+  moveq #0,d0.l
+  moveq #64,d1.l
+  move.w #512,d3.w
+  move.w #448,d4.w
+  bsr.w add_rectangle.bounds
+.done:
+]
+
+[cycle_data
+cycle_phase:
+  defw 0
+cycle_age:
+  defw 0
+cycle_active:
+  defw 0
+cycle_epoch:
+  defw 0
+cycle_wait_image:
+  defw 0
+cycle_loop_request:
+  defw 0
+cycle_cancelled:
+  defw 0
+cycle_dwell_limit:
+  defw 832
+cycle_join_dx:
+  defw 0
+cycle_join_depth:
+  defw 112
+cycle_last_x:
+  defw 128
+cycle_last_depth:
+  defw 112
+cycle_full_damage:
+  defw 0,0
+page_boss_present:
+  defw 0
+page_cycle_epoch:
+  defw 0
+page_cycle_phase:
+  defw 0
+page_cycle_age:
+  defw 0
+page_pose_epoch:
+  defw 0
+page_boss_x:
+  defw 0
+page_boss_depth:
+  defw 0
+cycle_last_endpoint_phase:
+  defw 0
+cycle_last_endpoint_age:
+  defw 0
+cycle_loops:
+  defl 0
+cycle_stale_jobs:
+  defl 0
+cycle_endpoints:
+  defl 0
+cycle_dwell_started:
+  defl 0
+cycle_join_started:
+  defl 0
+]/

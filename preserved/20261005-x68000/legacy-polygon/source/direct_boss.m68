@@ -1,0 +1,117 @@
+// Direct candidate09 stores geometry, never a boss color/coverage/run bitmap.
+// Slot buffer: 180 projected-vertex bytes, 256 face-order bytes, count word.
+[direct_store_geometry
+  move.l draw_vram_base.l,a1
+  lea projected_vertices(pc),a0
+  moveq #44,d0.l
+.vertices:
+  move.l (a0)+,(a1)+
+  dbra d0.w,.vertices
+  lea face_order(pc),a0
+  moveq #63,d0.l
+.faces:
+  move.l (a0)+,(a1)+
+  dbra d0.w,.faces
+  move.w STATUS_VISIBLE_FACES.l,(a1)
+]
+
+// Called only outside generate_pose. Nested service maintains logical ticks
+// but is forbidden from entering another compositor slice or renderer.
+[direct_draw_boss
+  movem.l d0-d7/a0-a6,-(sp)
+  move.w #1,direct_drawing.l
+  move.w cycle_epoch.l,direct_epoch.l
+  move.w (a4),direct_origin_x.l
+  move.w 2(a4),direct_origin_y.l
+  move.l 8(a4),a0
+  lea projected_vertices(pc),a1
+  moveq #44,d0.l
+.vertices:
+  move.l (a0)+,(a1)+
+  dbra d0.w,.vertices
+  lea face_order(pc),a1
+  moveq #63,d0.l
+.faces:
+  move.l (a0)+,(a1)+
+  dbra d0.w,.faces
+  move.w (a0),STATUS_VISIBLE_FACES.l
+  move.l CTX+5120+4.l,render_faces.l
+  move.w #64,render_size.l
+  bsr.w draw_faces
+  clr.w direct_drawing.l
+  move.w direct_epoch.l,d0.w
+  cmp.w cycle_epoch.l,d0.w
+  beq.w .done
+  // Mid-raster reset/phase cancellation cannot publish this partial page.
+  clr.w composing.l
+  clr.w page_ready.l
+.done:
+  movem.l (sp)+,d0-d7/a0-a6
+]
+
+// Same logical sample coverage and 2x2 display as08, direct solid GVRAM stores.
+// d0=left, d1=right exclusive, d6=local y. Called by the shared edge walker.
+[direct_span
+  movem.l d0-d4/a2,-(sp)
+  move.w d6.w,d2.w
+  add.w d2.w,d2.w
+  add.w direct_origin_y.l,d2.w
+  cmpi.w #64,d2.w
+  blt.w .done
+  cmpi.w #448,d2.w
+  bge.w .done
+  move.w direct_origin_x.l,d3.w
+  neg.w d3.w
+  asr.w #1,d3.w
+  cmp.w d3.w,d0.w
+  bge.w .left
+  move.w d3.w,d0.w
+.left:
+  addi.w #256,d3.w
+  cmp.w d3.w,d1.w
+  ble.w .right
+  move.w d3.w,d1.w
+.right:
+  sub.w d0.w,d1.w
+  ble.w .done
+  moveq #0,d4.l
+  move.w d1.w,d4.w
+  lsl.l #3,d4.l
+  add.l d4.l,S_WRITES.l
+  moveq #0,d4.l
+  move.w d2.w,d4.w
+  lsl.l #8,d4.l
+  lsl.l #2,d4.l
+  add.w d0.w,d0.w
+  add.w direct_origin_x.l,d0.w
+  add.w d0.w,d0.w
+  ext.l d0.l
+  add.l d0.l,d4.l
+  move.l composite_vram.l,a2
+  adda.l d4.l,a2
+  move.w triangle_color.l,d3.w
+  addi.w #16,d3.w
+  move.w d3.w,d2.w
+  swap d3
+  move.w d2.w,d3.w
+  subq.w #1,d1.w
+.pixels:
+  move.l d3.l,1024(a2)
+  move.l d3.l,(a2)+
+  dbra d1.w,.pixels
+.done:
+  movem.l (sp)+,d0-d4/a2
+]
+
+[direct_data
+direct_in_pose:
+  defw 0
+direct_drawing:
+  defw 0
+direct_epoch:
+  defw 0
+direct_origin_x:
+  defw 0
+direct_origin_y:
+  defw 0
+]/

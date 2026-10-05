@@ -1,0 +1,16 @@
+{
+  "sourceDirectory": "D:/work/PolygonGames/proposals/20261005-axxphorg-six-part-background-v05",
+  "sourceManifestSha256": "8081535bbb4d7209ea29b9f00c5d68ef9b007d7cf42e925d08130bf75dfc6bea",
+  "backgroundSampleStride": 4,
+  "normalEnemyLimit": 4,
+  "battleshipEnemyLimit": 1,
+  "normalSpawnIntervalTicks": 80,
+  "battleshipSpawnIntervalTicks": 240,
+  "bossHoldLoops": 6,
+  "bossPartHp": 1,
+  "playerWorldUnitsPerTick": 2,
+  "playlists": [["01_stars", "03_battleship", "04_boss_arrival", "05_boss_loop", "06_boss_departure", "01_stars"], ["01_stars", "02_asteroids", "01_stars", "02_asteroids", "03_battleship", "04_boss_arrival", "05_boss_loop", "06_boss_departure", "01_stars"]],
+  "starsWaitForNext": true,
+  "victoryPresentation": null,
+  "score": null
+}

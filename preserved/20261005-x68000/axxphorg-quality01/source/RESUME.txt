@@ -1,0 +1,101 @@
+最新の品質修正チェックポイント（2026-10-05）
+・最新の正本: この試作のREADME.txtとQUALITY-20261005-01.json。
+・固定投影v0.5、変更タイル復元、全変更像の完了、実占有範囲消去、入力bridge修正を実装。
+・新BIN/ハッシュ・現在の共有接続・実画面/操作・性能と残件はQUALITY報告に記録。
+・現BIN: 37052 bytes / SHA256 dc29efb8f70bde4eb7b98eacce91505f98afb4f563a2efadb5fb7e784ff55bea
+・最新有限検証: build/verification-1791188454853797400/result.json。12画面の全背景・全画面照合で不一致0。
+・通常ブラウザ操作の移動/解除/反転/射撃/シーン送りを実画像で確認。build/QUALITY-UI.jsonとQUALITY-UI-OBSERVATIONS.json。
+・10MHz換算の全頁平均: 星4.15Hz、戦艦5.66Hz、ボスhold2.05Hz。実機FPSでも他機種比較でもない。
+・星1頁の内訳例: 局所像生成117.69ms、背景部分復元73.17ms、前景転送36.35ms、合計252.44ms。
+・background sourceは3Hz上限。前景/背景の画素別深度遮蔽なし。速度・操作遅延は未受入。
+・通常Champon8 X68000キー入力、実機、性能/画質のユーザー受入は別の残件。
+・以下のassembly失敗/未起動等は休止時点の履歴であり、現在の状態ではない。
+
+AxxPhorg / X68000 再開メモ（旧休止チェックポイント）
+更新: 2026-10-05 JST（08:14:56共有ホスト確認の再開通知を受領）
+状態: ユーザーの「再開手続きして。」により休止解除。未完了のassembly修正から再開。
+正本: D:/work/X68000で何か作ろう/prototypes/axxphorg-rich
+
+再開時のChampon8接続ルール（2026-10-05追加通知を受領）
+・ユーザーがエミュレータを終了済み。「前回起動していた」や保存PID/sessionを稼働の正としない。
+・再開指示後、実在して応答する共有Champon8を確認し、現在のPID・EXE/版・workspaceを照合する。
+・共有ホストがなければエミュレータ統括（local / 01a0917a-a44b-7f42-b3b8-58a6b138f8a2）と
+  起動担当を一本化して新規に用意する。各担当が独立起動して乱立させない。
+・新ホストではsession参照・workspace・担当handle/instanceを振り直し、接続先/担当割当を全通知。
+  旧識別子をそのまま流用せず、秘密tokenは通知しない。配達・受領・実接続確認を区別する。
+・旧不要タブを自動復元せず、他担当タブ・共有ホスト・全体配置は勝手に変更しない。
+・共通手順: D:/work/PolygonGames/proposals/20261005-axxphorg-end-of-day-01/CHAMPON8-RESTART-REBIND.md
+・前回通知時はメモ追記のみで休止を維持。今回の再開通知では作業を継続する。
+  予約handle axx-r20261005-x68000、共有preview.31 / PID12052 /
+  workspace bca72ca874fa467fbd87d20ed418c48b。これらは通知時点の値で、実接続時に再照合する。
+・新規着手: rich_stateのラベル/定義を別行にし、VRAM/画面寸法equを補完。
+  以降のビルド・実接続結果はこの試作内の固有報告に保存する。
+
+採用方針・現在の試作設定
+・既存デモを変更せず、X68000専用の独立した操作試作を作る。
+・共通素材v0.4の6シーンを参照し、星→戦艦→ボスの短いスライスから開始。
+  素材: D:/work/PolygonGames/proposals/20261005-axxphorg-six-part-background-v04
+  manifest SHA256: 5e9043dc050131b416a8c347c73b82a8b51a36a041ceebfcad045c2ed02686d7
+・背景256×192を2倍表示して512×384領域を使う。これはSSAAではない。
+  試作は元背景12fpsを4フレーム間隔で格納するため背景更新は3fps相当。
+・前景はMC68000で局所3D生成、材質色・陰影・完成像保持・部分復元・2ページ公開。
+  他機種の白固定やスプライトの色制限を必須仕様として持ち込まない。
+・通常敵上限4、戦艦中1、ボス全期間は通常敵0。残敵は報酬なしで退場。
+・ボス部品6個の安定ID/HPを保持し、背景の60度反復ではリセットしない。
+  holdは暫定6ループ=48秒、HP1。期限判定と撃破イベントの重複抑止を実装中。
+・星のイベント待機と2種類のシーケンスをsettings.jsonで用意。
+  勝利演出・スコア・次ステージは未決定のまま。
+
+保存した変更・生成物
+・新規ソース: build.py、guest.m68、settings.json（すべてこの試作内）。
+・build/background.bin: 295196 bytes、生成済み。
+・build/guest.m68: 118249 bytes、生成済み。
+・build/assembler.txt: 直前の失敗ログを保存。成功guest.bin / build.jsonは未生成。
+・Git HEAD: 38b96a5f657d652fd447637c85dd021f83d295bf / main。
+  prototypes/は未追跡。README/HANDOFF変更、旧アセンブラ移動関連削除、
+  既存ポリゴン資料・ツールなどのdirty状態を保持。commit/push・移管・配布なし。
+
+SHA256（休止時点）
+build.py: 0eceee7320ab8df9c217a1c78e11fca1d729e9198bb14b8382f069592ccc7ab1
+guest.m68: e750c27c2b01d3e5fa9aac7f7dba5b27c4fae32dc39c447f13b5f129239e9bf0
+settings.json: c35bc96de145d75165b6c9e1cf8d13ebe943464e7302d1933e11825b7e0b8422
+build/guest.m68: 729cea80b1f669d339301a587994a22edd3c60603f424e5655f9ee61b31bbb2f
+build/background.bin: 6bffde8364f0a14cd1e753508c52e595c1ad39514a4a38d0f791338b63a882f8
+
+確認済み / 未検証
+・素材manifestと列挙素材のハッシュ照合、背景差分符号化・ソース生成まで実施。
+・初回assemblyは失敗。rich_stateの「ラベル: defw/defl」が同一行で未対応。
+  さらに継承rendererでVRAM_PAGE_1 / SCREEN_HEIGHTの未定義がある。
+・新しいguestの起動、表示、入力、自然シーケンス、性能、実機はすべて未検証。
+  旧デモの計測・画像をこの試作の合格証拠には流用しない。
+・通常Champon8のX68000キー入力adapterは未接続という既知の制約。
+  現ソースのheld-key mailboxは通常キーボード入力の合格ではない。
+・settings内の一部定数はASM側に残る。出現間隔/設定反映を要確認。
+  ボス移行時の旧キャッシュ無効化、姿勢/公開背景の同期、奥行き合成、
+  カメラ/モデルY軸、可視hit flash/局所破片、期限境界も残件。
+・ユーザーの「遅い/少色/ハード不向き」診断は休止時点で未完了。
+  現行README/HANDOFFの旧11版の問題と、新試作の未確認状態を混同しない。
+
+次の具体的な一手（再開指示後のみ）
+1. guest.m68のrich_stateラベルとdefw/deflを別行にし、必要equを補う。
+2. 下記コマンドを1回実行し、assembly成功・code/dataの領域衝突を確認。
+3. キャッシュ移行/設定反映/効果を直し、所有された有限検証環境で起動・画面・入力を確認。
+   正常入力の接続方法は共有エミュレータ担当の境界を守って確定する。
+   focused browser→自己guest mailbox案は未実装。通常ハード入力と同一視しない。
+
+ビルド・起動・操作
+作業ディレクトリ: D:/work/X68000で何か作ろう
+PowerShellビルド:
+& 'C:/Users/urdca/.cache/codex-runtimes/codex-primary-runtime/dependencies/python/python.exe' -B 'prototypes/axxphorg-rich/build.py'
+使用assembler: D:/work/DevelopTools/Assemblers/m68kasm/dist/m68kasm-0.9.0-preview.1-win-x64/bin/m68kasm.exe
+起動手順は未作成（成功BINなし）。共有ホスト再利用規則とPID/EXE/workspace/
+handle/instanceの照合を先に行う。閉じたsc-x68000や他人のタブは復活・変更しない。
+暫定mailbox: word 0xf0020、bit0左/1右/2前進/3後退/4射撃/5次シーン/6playlist選択。
+この記載はソース上の操作仕様であり、操作確認済みという意味ではない。
+
+停止・所有状態
+・この試作でエミュレータ/タブ/入力bridgeはまだ開始していない。
+・直前のビルドは終了コード1で完了しており、継続処理はない。
+・active goalはなし。この仕事の自動再実行予定を作成していない。
+・共有Champon8ホスト、既存タブ、全体配置、他用途アプリは終了・変更していない。
+・休止時はメモ保存と容易な読取りだけ。新しい修正・比較・ビルド・ベンチマークなし。

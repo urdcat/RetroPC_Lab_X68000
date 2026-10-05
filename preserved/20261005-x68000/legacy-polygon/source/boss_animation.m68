@@ -1,0 +1,57 @@
+// Animation utilization 08: complete-image reuse is independent of translation.
+// Projection/depth still belong to the completed image; no unfinished raster
+// is published. All placement is sampled once at start_composite.
+[animation_place_boss
+  movem.l d2-d7/a0-a2,-(sp)
+  bsr.w cycle_pose
+  move.w d1.w,animation_page_x.l
+  move.w d0.w,animation_page_y.l
+  sub.w CTX+5120+140.l,d1.w
+  add.w CTX+5120+78.l,d1.w
+  sub.w CTX+5120+142.l,d0.w
+  add.w CTX+5120+80.l,d0.w
+  exg d0.l,d1.l
+  movem.l (sp)+,d2-d7/a0-a2
+]
+
+// Reapply an unchanged mask only on rows affected by restore/object drawing.
+// A changed level already contributes the complete mask rectangle in v2.
+[animation_mask_row_dirty
+  movem.l d1-d4/a0,-(sp)
+  move.w mask_row.l,d1.w
+  add.w d1.w,d1.w
+  addi.w #160,d1.w
+  move.w d1.w,d2.w
+  addq.w #2,d2.w
+  move.l #RECTS,a0
+  move.w rect_count.l,d3.w
+  subq.w #1,d3.w
+  bmi.w .no
+.rectangle:
+  cmpi.w #320,(a0)
+  bge.w .next
+  cmpi.w #192,4(a0)
+  ble.w .next
+  cmp.w 6(a0),d1.w
+  bge.w .next
+  cmp.w 2(a0),d2.w
+  ble.w .next
+  moveq #1,d0.l
+  bra.w .done
+.next:
+  addq.l #8,a0
+  dbra d3.w,.rectangle
+.no:
+  moveq #0,d0.l
+.done:
+  movem.l (sp)+,d1-d4/a0
+]
+
+[animation_data
+animation_page_x:
+  defw 128
+animation_page_y:
+  defw 80
+animation_mask_rows_skipped:
+  defl 0
+]/

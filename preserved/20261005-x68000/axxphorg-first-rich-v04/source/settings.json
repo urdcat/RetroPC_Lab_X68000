@@ -1,0 +1,15 @@
+{
+  "sourceManifestSha256": "5e9043dc050131b416a8c347c73b82a8b51a36a041ceebfcad045c2ed02686d7",
+  "backgroundSampleStride": 4,
+  "normalEnemyLimit": 4,
+  "battleshipEnemyLimit": 1,
+  "normalSpawnIntervalTicks": 80,
+  "battleshipSpawnIntervalTicks": 240,
+  "bossHoldLoops": 6,
+  "bossPartHp": 1,
+  "playerWorldUnitsPerTick": 2,
+  "playlists": [["01_stars", "03_battleship", "04_boss_arrival", "05_boss_loop", "06_boss_departure", "01_stars"], ["01_stars", "02_asteroids", "01_stars", "02_asteroids", "03_battleship", "04_boss_arrival", "05_boss_loop", "06_boss_departure", "01_stars"]],
+  "starsWaitForNext": true,
+  "victoryPresentation": null,
+  "score": null
+}

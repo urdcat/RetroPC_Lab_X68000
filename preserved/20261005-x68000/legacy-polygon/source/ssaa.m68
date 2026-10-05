@@ -1,0 +1,1169 @@
+// X68000 / Champon8: native 512x512 4bpp samples, real 2x2 SSAA to 256x256.
+// No host-side AA: MC68000 resolves every changed output pixel through AA_LUT.
+//
+// The MC68000 performs all rotation, projection, sorting and rasterization.
+// Model data is generated into build/ssaa/model_generated.inc from the locally held,
+// hash-pinned Star Cruiser reference ROM and is intentionally not tracked.
+
+SCREEN_WIDTH equ 512
+SCREEN_HEIGHT equ 512
+SCREEN_CENTER_X equ 256
+SCREEN_CENTER_Y equ 256
+PROJECTION_FOCAL_X equ 700
+PROJECTION_FOCAL_Y equ 700
+CAMERA_DEPTH equ 300
+MODEL_VERTEX_COUNT equ 35
+MODEL_FACE_COUNT equ 58
+STAR_COUNT equ 96
+
+VRAM_BASE equ $00020000
+VRAM_PAGE_1 equ $00060000
+OUTPUT_VRAM_0 equ $00c00000
+OUTPUT_VRAM_1 equ $00c40000
+AA_LUT equ $00040000
+OUTPUT_WIDTH equ 256
+OUTPUT_HEIGHT equ 256
+CRTC_PAGE_0_Y equ $00e8001a
+CRTC_MODE_REGISTER equ $00e80028
+VIDEO_CONTROL_1 equ $00e82500
+VIDEO_CONTROL_2 equ $00e82600
+GRAPHICS_PALETTE equ $00e82000
+MFP_GPIP equ $00e88001
+
+STATUS_FRAME equ $000f0000
+STATUS_ANGLE equ $000f0002
+STATUS_READY equ $000f0004
+STATUS_VISIBLE_FACES equ $000f0006
+STATUS_SPANS equ $000f0008
+STATUS_PIXELS equ $000f000c
+
+[entry
+  clr.w VIDEO_CONTROL_2.l
+  // Standard high-resolution 256x256: 512 raster lines, each source row twice.
+  lea crtc_words(pc),a0
+  move.l #$00e80000,a1
+  moveq #7,d0.l
+.crtc:
+  move.w (a0)+,(a1)+
+  dbra d0.w,.crtc
+  move.w #$0310,CRTC_MODE_REGISTER.l
+  move.w #$00e4,VIDEO_CONTROL_1.l
+  clr.l $00e80018.l
+  clr.w STATUS_FRAME.l
+  clr.w STATUS_ANGLE.l
+  clr.w STATUS_VISIBLE_FACES.l
+  clr.w STATUS_SPANS.l
+  clr.l STATUS_PIXELS.l
+  clr.w STATUS_READY.l
+  clr.w current_angle.l
+  clr.w have_previous_bounds.l
+  clr.l page_initialized.l
+  move.w #1,draw_page.l
+  move.l #VRAM_BASE,draw_vram_base.l
+  bsr.w clear_full_frame
+  move.l #VRAM_PAGE_1,draw_vram_base.l
+  bsr.w clear_full_frame
+  bsr.w clear_output_pages
+  bsr.w init_dirty_spans
+  move.w #SCREEN_HEIGHT,page_bounds.l
+  clr.w page_bounds+2.l
+  move.w #SCREEN_HEIGHT,page_bounds+4.l
+  clr.w page_bounds+6.l
+  move.w #$a55a,STATUS_READY.l
+
+.frame_loop:
+  bsr.w prepare_draw_page
+  bsr.w begin_resolve_spans
+  bsr.w merge_resolve_spans
+  bsr.w clear_previous_spans
+  bsr.w draw_backdrop
+  bsr.w transform_vertices
+  bsr.w build_face_order
+  bsr.w sort_face_order
+  clr.w STATUS_VISIBLE_FACES.l
+  clr.w STATUS_SPANS.l
+  clr.l STATUS_PIXELS.l
+  bsr.w draw_faces
+  bsr.w merge_resolve_spans
+.before_resolve:
+  bsr.w resolve_aa
+.after_resolve:
+  bsr.w commit_bounds
+  bsr.w present_frame
+.frame_complete:
+  move.w current_angle.l,STATUS_ANGLE.l
+  addq.w #1,STATUS_FRAME.l
+  eori.w #1,draw_page.l
+  addq.w #8,current_angle.l
+  andi.w #$01ff,current_angle.l
+  bra.w .frame_loop
+]/
+
+[clear_full_frame
+  movem.l d0-d7/a0-a6,-(sp)
+  move.l draw_vram_base.l,a0
+  moveq #0,d0.l
+  moveq #0,d1.l
+  moveq #0,d2.l
+  moveq #0,d3.l
+  moveq #0,d4.l
+  moveq #0,d5.l
+  moveq #0,d6.l
+  move.l d0.l,a1
+  move.l d0.l,a2
+  move.l d0.l,a3
+  move.l d0.l,a4
+  move.l d0.l,a5
+  move.l d0.l,a6
+  move.w #2519,d7.w
+.burst:
+  movem.l d0-d6/a1-a6,(a0)
+  adda.l #52,a0
+  dbra d7.w,.burst
+  // 2520*52 + 32 = 131072 packed-sample bytes.
+  moveq #7,d7.l
+.tail:
+  clr.l (a0)+
+  dbra d7.w,.tail
+  movem.l (sp)+,d0-d7/a0-a6
+]
+
+[init_dirty_spans
+  movem.l d0/a0-a1,-(sp)
+  lea dirty_span_left(pc),a0
+  lea dirty_span_right(pc),a1
+  move.w #((SCREEN_HEIGHT * 2) - 1),d0.w
+.row:
+  move.w #SCREEN_WIDTH,(a0)+
+  clr.w (a1)+
+  dbra d0.w,.row
+  movem.l (sp)+,d0/a0-a1
+]
+
+// Each physical page owns its previous silhouette; reuse it two frames later.
+[prepare_draw_page
+  movem.l d0-d1/a0-a1,-(sp)
+  moveq #0,d0.l
+  move.w draw_page.l,d0.w
+  move.l #VRAM_BASE,draw_vram_base.l
+  move.l #OUTPUT_VRAM_0,output_vram_base.l
+  tst.w d0.w
+  beq.s .page_zero
+  move.l #VRAM_PAGE_1,draw_vram_base.l
+  move.l #OUTPUT_VRAM_1,output_vram_base.l
+.page_zero:
+  move.w d0.w,d1.w
+  lsl.w #2,d1.w
+  lea page_bounds(pc),a0
+  move.w 0(a0,d1.w),previous_min_y.l
+  move.w 2(a0,d1.w),previous_max_y.l
+  mulu.w #1024,d0.l
+  lea dirty_span_left(pc),a0
+  lea dirty_span_right(pc),a1
+  adda.l d0.l,a0
+  adda.l d0.l,a1
+  move.l a0,dirty_left_pointer.l
+  move.l a1,dirty_right_pointer.l
+  movem.l (sp)+,d0-d1/a0-a1
+]
+
+// The display remains on the completed front page throughout all drawing.
+// GPIP bit 7 is low in vertical blank. Switch the page-0 Y scroll atomically.
+[present_frame
+  movem.l d0/a0,-(sp)
+.wait_active:
+  btst #7,MFP_GPIP.l
+  beq.s .wait_active
+.wait_blank:
+  btst #7,MFP_GPIP.l
+  bne.s .wait_blank
+  move.w draw_page.l,d0.w
+  lsl.w #8,d0.w
+  move.w d0.w,CRTC_PAGE_0_Y.l
+  move.w #1,VIDEO_CONTROL_2.l
+  move.w draw_page.l,d0.w
+  add.w d0.w,d0.w
+  lea page_initialized(pc),a0
+  move.w #1,0(a0,d0.w)
+  movem.l (sp)+,d0/a0
+]
+
+// Erase only the union of spans that actually received polygon pixels on each
+// previous scanline, then reset those records for the next rendered frame.
+[clear_previous_spans
+  movem.l d0-d3/d7/a0-a3,-(sp)
+  move.w previous_min_y.l,d3.w
+  bpl.s .min_ok
+  moveq #0,d3.l
+.min_ok:
+  cmpi.w #SCREEN_HEIGHT,d3.w
+  bge.w .done
+  move.w previous_max_y.l,d7.w
+  cmpi.w #511,d7.w
+  ble.s .max_ok
+  move.w #511,d7.w
+.max_ok:
+  sub.w d3.w,d7.w
+  bmi.w .done
+  move.l dirty_left_pointer.l,a0
+  move.l dirty_right_pointer.l,a1
+  move.w d3.w,d0.w
+  add.w d0.w,d0.w
+  adda.w d0.w,a0
+  adda.w d0.w,a1
+  move.l draw_vram_base.l,a2
+  andi.l #$0000ffff,d3.l
+  lsl.l #8,d3.l
+  adda.l d3.l,a2
+.row:
+  move.w (a0),d0.w
+  move.w (a1),d1.w
+  move.w #SCREEN_WIDTH,(a0)+
+  clr.w (a1)+
+  cmp.w d1.w,d0.w
+  bge.s .next
+  // Expand to aligned eight-sample cells. Any extra samples contain only
+  // the static backdrop, which is restored before drawing. No edge RMW is
+  // needed when clearing; unchanged output cells retain that same backdrop.
+  lsr.w #3,d0.w
+  addq.w #7,d1.w
+  lsr.w #3,d1.w
+  sub.w d0.w,d1.w
+  lsl.w #2,d0.w
+  move.l a2,a3
+  adda.w d0.w,a3
+  subq.w #1,d1.w
+.longs:
+  clr.l (a3)+
+  dbra d1.w,.longs
+.next:
+  adda.l #256,a2
+  dbra d7.w,.row
+.done:
+  movem.l (sp)+,d0-d3/d7/a0-a3
+]
+
+// 96 star points plus square-axis reticle; all use the same indexed palette.
+[draw_backdrop
+  movem.l d0-d7/a0-a2,-(sp)
+  lea starfield(pc),a2
+  moveq #(STAR_COUNT - 1),d7.l
+.star:
+  moveq #0,d0.l
+  moveq #0,d1.l
+  move.w (a2)+,d0.w
+  move.w (a2)+,d1.w
+  move.w (a2)+,d2.w
+  lsl.l #8,d1.l
+  move.w d0.w,d3.w
+  lsr.w #1,d0.w
+  add.l d0.l,d1.l
+  move.l draw_vram_base.l,a0
+  adda.l d1.l,a0
+  btst #0,d3.l
+  bne.s .odd
+  andi.b #$0f,(a0)
+  lsl.b #4,d2.b
+  or.b d2.b,(a0)
+  bra.s .star_next
+.odd:
+  andi.b #$f0,(a0)
+  or.b d2.b,(a0)
+.star_next:
+  dbra d7.w,.star
+
+  move.l draw_vram_base.l,a0
+  adda.l #(SCREEN_CENTER_Y * 256),a0
+  moveq #-1,d0.l
+  moveq #63,d1.l
+.horizontal:
+  move.l d0.l,(a0)+
+  dbra d1.w,.horizontal
+  move.l draw_vram_base.l,a0
+  adda.l #(SCREEN_CENTER_X / 2),a0
+  move.w #511,d1.w
+.vertical:
+  ori.b #$f0,(a0)
+  adda.l #256,a0
+  dbra d1.w,.vertical
+  movem.l (sp)+,d0-d7/a0-a2
+]
+
+[transform_vertices
+  movem.l d0-d7/a0-a4,-(sp)
+  lea sine_table(pc),a2
+  move.w #$7fff,current_min_x.l
+  move.w #$8000,current_max_x.l
+  move.w #$7fff,current_min_y.l
+  move.w #$8000,current_max_y.l
+
+  move.w current_angle.l,d0.w
+  andi.w #$00ff,d0.w
+  add.w d0.w,d0.w
+  move.w 0(a2,d0.w),d4.w       // yaw sine
+  addi.w #128,d0.w
+  andi.w #$01ff,d0.w
+  move.w 0(a2,d0.w),d5.w       // yaw cosine
+
+  move.w current_angle.l,d0.w
+  lsr.w #1,d0.w
+  addi.w #24,d0.w
+  andi.w #$00ff,d0.w
+  add.w d0.w,d0.w
+  move.w 0(a2,d0.w),d6.w       // pitch sine
+  addi.w #128,d0.w
+  andi.w #$01ff,d0.w
+  move.w 0(a2,d0.w),d7.w       // pitch cosine
+
+  lea model_vertices(pc),a0
+  lea projected_vertices(pc),a1
+  move.w #MODEL_VERTEX_COUNT,vertices_left.l
+.vertex:
+  move.w (a0)+,tmp_x.l
+  move.w (a0)+,tmp_y.l
+  move.w (a0)+,tmp_z.l
+
+  // yaw: x1 = (x*cos + z*sin) >> 14
+  move.w tmp_x.l,d0.w
+  muls.w d5.w,d0.l
+  move.w tmp_z.l,d1.w
+  muls.w d4.w,d1.l
+  add.l d1.l,d0.l
+  asr.l #7,d0.l
+  asr.l #7,d0.l
+  move.w d0.w,tmp_x1.l
+
+  // yaw: z1 = (z*cos - x*sin) >> 14
+  move.w tmp_z.l,d0.w
+  muls.w d5.w,d0.l
+  move.w tmp_x.l,d1.w
+  muls.w d4.w,d1.l
+  sub.l d1.l,d0.l
+  asr.l #7,d0.l
+  asr.l #7,d0.l
+  move.w d0.w,tmp_z1.l
+
+  // pitch: y2 = (y*cos - z1*sin) >> 14
+  move.w tmp_y.l,d0.w
+  muls.w d7.w,d0.l
+  move.w tmp_z1.l,d1.w
+  muls.w d6.w,d1.l
+  sub.l d1.l,d0.l
+  asr.l #7,d0.l
+  asr.l #7,d0.l
+  move.w d0.w,tmp_y2.l
+
+  // pitch: z2 = (y*sin + z1*cos) >> 14
+  move.w tmp_y.l,d0.w
+  muls.w d6.w,d0.l
+  move.w tmp_z1.l,d1.w
+  muls.w d7.w,d1.l
+  add.l d1.l,d0.l
+  asr.l #7,d0.l
+  asr.l #7,d0.l
+  addi.w #CAMERA_DEPTH,d0.w
+  move.w d0.w,tmp_depth.l
+
+  // Square-pixel correction: identical X/Y focal lengths for the 512x512 frame.
+  move.w tmp_x1.l,d1.w
+  muls.w #PROJECTION_FOCAL_X,d1.l
+  divs.w d0.w,d1.l
+  addi.w #SCREEN_CENTER_X,d1.w
+  move.w d1.w,(a1)+
+  cmp.w current_min_x.l,d1.w
+  bge.s .min_x_ok
+  move.w d1.w,current_min_x.l
+.min_x_ok:
+  cmp.w current_max_x.l,d1.w
+  ble.s .max_x_ok
+  move.w d1.w,current_max_x.l
+.max_x_ok:
+
+  move.w tmp_y2.l,d1.w
+  muls.w #PROJECTION_FOCAL_Y,d1.l
+  divs.w d0.w,d1.l
+  addi.w #SCREEN_CENTER_Y,d1.w
+  move.w d1.w,(a1)+
+  cmp.w current_min_y.l,d1.w
+  bge.s .min_y_ok
+  move.w d1.w,current_min_y.l
+.min_y_ok:
+  cmp.w current_max_y.l,d1.w
+  ble.s .max_y_ok
+  move.w d1.w,current_max_y.l
+.max_y_ok:
+  move.w d0.w,(a1)+
+
+  subq.w #1,vertices_left.l
+  bne.w .vertex
+  movem.l (sp)+,d0-d7/a0-a4
+]
+
+[commit_bounds
+  movem.l d0/a0,-(sp)
+  move.w draw_page.l,d0.w
+  lsl.w #2,d0.w
+  lea page_bounds(pc),a0
+  move.w current_min_y.l,0(a0,d0.w)
+  move.w current_max_y.l,2(a0,d0.w)
+  move.w current_min_x.l,previous_min_x.l
+  move.w current_max_x.l,previous_max_x.l
+  move.w current_min_y.l,previous_min_y.l
+  move.w current_max_y.l,previous_max_y.l
+  move.w #1,have_previous_bounds.l
+  movem.l (sp)+,d0/a0
+]
+
+[build_face_order
+  movem.l d0-d5/a0-a3,-(sp)
+  lea model_faces(pc),a0
+  lea projected_vertices(pc),a1
+  lea face_order(pc),a2
+  clr.w face_index.l
+  move.w #MODEL_FACE_COUNT,faces_left.l
+.face:
+  clr.w d3.w
+
+  move.w (a0)+,d0.w
+  mulu.w #6,d0.l
+  move.w 4(a1,d0.w),d4.w
+  add.w d4.w,d3.w
+
+  move.w (a0)+,d0.w
+  mulu.w #6,d0.l
+  move.w 4(a1,d0.w),d4.w
+  add.w d4.w,d3.w
+
+  move.w (a0)+,d0.w
+  mulu.w #6,d0.l
+  move.w 4(a1,d0.w),d4.w
+  add.w d4.w,d3.w
+
+  addq.l #2,a0                 // skip indexed material
+  move.w d3.w,(a2)+
+  move.w face_index.l,(a2)+
+  addq.w #1,face_index.l
+  subq.w #1,faces_left.l
+  bne.w .face
+  movem.l (sp)+,d0-d5/a0-a3
+]
+
+// Stable descending insertion sort: equal-depth faces retain model order.
+[sort_face_order
+  movem.l d0-d2/d5-d7/a0-a1,-(sp)
+  lea face_order+4(pc),a0
+  moveq #1,d5.l
+  moveq #(MODEL_FACE_COUNT - 2),d7.l
+.insert:
+  move.l (a0),d0.l
+  move.w (a0),d1.w
+  move.w d5.w,d2.w
+  move.l a0,a1
+.shift:
+  cmp.w -4(a1),d1.w
+  ble.s .place
+  move.l -4(a1),(a1)
+  subq.l #4,a1
+  subq.w #1,d2.w
+  bne.s .shift
+.place:
+  move.l d0.l,(a1)
+  addq.l #4,a0
+  addq.w #1,d5.w
+  dbra d7.w,.insert
+  movem.l (sp)+,d0-d2/d5-d7/a0-a1
+]
+
+[draw_faces
+  movem.l d0-d7/a0-a4,-(sp)
+  lea face_order(pc),a0
+  move.w #MODEL_FACE_COUNT,faces_left.l
+.face:
+  move.w 2(a0),d0.w
+  mulu.w #8,d0.l
+  lea model_faces(pc),a2
+  lea 0(a2,d0.w),a2
+  lea projected_vertices(pc),a1
+  lea triangle_points(pc),a3
+
+  move.w (a2)+,d0.w
+  bsr.w copy_projected_xy
+  move.w (a2)+,d0.w
+  bsr.w copy_projected_xy
+  move.w (a2)+,d0.w
+  bsr.w copy_projected_xy
+  move.w (a2),triangle_color.l
+
+  bsr.w cull_triangle
+  tst.l d0.l
+  ble.s .skip
+  addq.w #1,STATUS_VISIBLE_FACES.l
+  bsr.w raster_triangle
+.skip:
+  addq.l #4,a0
+  subq.w #1,faces_left.l
+  bne.w .face
+  movem.l (sp)+,d0-d7/a0-a4
+]
+
+// d0=index, a1=projected base, a3=destination; all other state preserved by caller.
+[copy_projected_xy
+  mulu.w #6,d0.l
+  lea 0(a1,d0.w),a4
+  move.w (a4)+,(a3)+
+  move.w (a4),(a3)+
+]
+
+// d0 = signed 32-bit screen-space cross product.
+[cull_triangle
+  move.w triangle_points+4.l,d0.w
+  sub.w triangle_points.l,d0.w
+  move.w triangle_points+10.l,d1.w
+  sub.w triangle_points+2.l,d1.w
+  muls.w d1.w,d0.l
+
+  move.w triangle_points+8.l,d2.w
+  sub.w triangle_points.l,d2.w
+  move.w triangle_points+6.l,d3.w
+  sub.w triangle_points+2.l,d3.w
+  muls.w d3.w,d2.l
+  sub.l d2.l,d0.l
+]
+
+[raster_triangle
+  movem.l d0-d7/a0-a3,-(sp)
+  move.w triangle_points.l,raster_x0.l
+  move.w triangle_points+2.l,raster_y0.l
+  move.w triangle_points+4.l,raster_x1.l
+  move.w triangle_points+6.l,raster_y1.l
+  move.w triangle_points+8.l,raster_x2.l
+  move.w triangle_points+10.l,raster_y2.l
+
+  // Three compare/swaps sort complete (x,y) pairs by ascending Y.
+  move.w raster_y0.l,d0.w
+  cmp.w raster_y1.l,d0.w
+  ble.s .pair_01_ok
+  move.w raster_y1.l,d1.w
+  move.w d1.w,raster_y0.l
+  move.w d0.w,raster_y1.l
+  move.w raster_x0.l,d0.w
+  move.w raster_x1.l,d1.w
+  move.w d1.w,raster_x0.l
+  move.w d0.w,raster_x1.l
+.pair_01_ok:
+  move.w raster_y1.l,d0.w
+  cmp.w raster_y2.l,d0.w
+  ble.s .pair_12_ok
+  move.w raster_y2.l,d1.w
+  move.w d1.w,raster_y1.l
+  move.w d0.w,raster_y2.l
+  move.w raster_x1.l,d0.w
+  move.w raster_x2.l,d1.w
+  move.w d1.w,raster_x1.l
+  move.w d0.w,raster_x2.l
+.pair_12_ok:
+  move.w raster_y0.l,d0.w
+  cmp.w raster_y1.l,d0.w
+  ble.s .sorted
+  move.w raster_y1.l,d1.w
+  move.w d1.w,raster_y0.l
+  move.w d0.w,raster_y1.l
+  move.w raster_x0.l,d0.w
+  move.w raster_x1.l,d1.w
+  move.w d1.w,raster_x0.l
+  move.w d0.w,raster_x1.l
+.sorted:
+  move.w raster_y2.l,d1.w
+  sub.w raster_y0.l,d1.w
+  beq.w .done
+
+  // Long edge slope in Q10.6; one division for the whole edge.
+  move.w raster_x2.l,d0.w
+  sub.w raster_x0.l,d0.w
+  ext.l d0.l
+  lsl.l #6,d0.l
+  divs.w d1.w,d0.l
+  move.w d0.w,long_edge_slope.l
+
+  move.w raster_x0.l,d0.w
+  ext.l d0.l
+  lsl.l #6,d0.l
+  move.l d0.l,long_edge_origin.l
+
+  // Upper half: long edge x0->x2 against short edge x0->x1.
+  move.w raster_y1.l,d1.w
+  sub.w raster_y0.l,d1.w
+  beq.s .lower_half
+  move.w raster_x1.l,d0.w
+  sub.w raster_x0.l,d0.w
+  ext.l d0.l
+  lsl.l #6,d0.l
+  divs.w d1.w,d0.l
+  move.w d0.w,half_slope_b.l
+  move.w long_edge_slope.l,half_slope_a.l
+  move.l long_edge_origin.l,half_x_a.l
+  move.l long_edge_origin.l,half_x_b.l
+  move.w raster_y0.l,half_start_y.l
+  move.w raster_y1.l,half_end_y.l
+  bsr.w raster_half
+
+.lower_half:
+  // Lower half: advance the long edge to y1 and walk x1->x2.
+  move.w raster_y2.l,d1.w
+  sub.w raster_y1.l,d1.w
+  beq.w .done
+  move.w raster_x2.l,d0.w
+  sub.w raster_x1.l,d0.w
+  ext.l d0.l
+  lsl.l #6,d0.l
+  divs.w d1.w,d0.l
+  move.w d0.w,half_slope_b.l
+  move.w long_edge_slope.l,half_slope_a.l
+
+  move.w raster_y1.l,d0.w
+  sub.w raster_y0.l,d0.w
+  move.w long_edge_slope.l,d1.w
+  muls.w d0.w,d1.l
+  add.l long_edge_origin.l,d1.l
+  move.l d1.l,half_x_a.l
+  move.w raster_x1.l,d0.w
+  ext.l d0.l
+  lsl.l #6,d0.l
+  move.l d0.l,half_x_b.l
+  move.w raster_y1.l,half_start_y.l
+  move.w raster_y2.l,half_end_y.l
+  bsr.w raster_half
+.done:
+  movem.l (sp)+,d0-d7/a0-a3
+]
+
+// Rescale Q10.6 exactly to Q16.16 once; SWAP extracts each integer endpoint.
+// The span writer preserves this state; each half pays one save/restore only.
+[raster_half
+  movem.l d0-d7/a0-a6,-(sp)
+  move.w half_start_y.l,d0.w
+  move.w half_end_y.l,d1.w
+  cmpi.w #0,d1.w
+  ble.w .done
+  cmpi.w #SCREEN_HEIGHT,d0.w
+  bge.w .done
+  move.l half_x_a.l,d4.l
+  move.l half_x_b.l,d5.l
+  move.w half_slope_a.l,d6.w
+  ext.l d6.l
+  move.w half_slope_b.l,d7.w
+  ext.l d7.l
+  tst.w d0.w
+  bge.s .top_clipped
+  move.w d0.w,d2.w
+  neg.w d2.w
+  move.l d6.l,d3.l
+  muls.w d2.w,d3.l
+  add.l d3.l,d4.l
+  move.l d7.l,d3.l
+  muls.w d2.w,d3.l
+  add.l d3.l,d5.l
+  clr.w d0.w
+.top_clipped:
+  cmpi.w #SCREEN_HEIGHT,d1.w
+  ble.s .bottom_clipped
+  move.w #SCREEN_HEIGHT,d1.w
+.bottom_clipped:
+  cmp.w d1.w,d0.w
+  bge.w .done
+  // Current clipped model envelope fits signed Q16.16. Multiplication by 1024
+  // retains every original Q10.6 step; no extra precision or rounding is added.
+  lsl.l #8,d4.l
+  lsl.l #2,d4.l
+  lsl.l #8,d5.l
+  lsl.l #2,d5.l
+  lsl.l #8,d6.l
+  lsl.l #2,d6.l
+  lsl.l #8,d7.l
+  lsl.l #2,d7.l
+  move.w d0.w,scan_y.l
+  move.w d1.w,scan_end.l
+  moveq #0,d2.l
+  move.w d0.w,d2.w
+  lsl.l #8,d2.l
+  move.l draw_vram_base.l,a4
+  adda.l d2.l,a4
+  moveq #0,d2.l
+  move.w d1.w,d2.w
+  lsl.l #8,d2.l
+  move.l draw_vram_base.l,a3
+  adda.l d2.l,a3
+  move.w d0.w,d2.w
+  add.w d2.w,d2.w
+  move.l dirty_left_pointer.l,a5
+  move.l dirty_right_pointer.l,a6
+  adda.w d2.w,a5
+  adda.w d2.w,a6
+  move.w triangle_color.l,d2.w
+  lsl.w #2,d2.w
+  lea solid_patterns(pc),a0
+  move.l 0(a0,d2.w),a2
+  lea packed_prefix_masks(pc),a1
+.scanline:
+  move.l d4.l,d0.l
+  swap d0.l
+  move.l d5.l,d1.l
+  swap d1.l
+  cmp.w d1.w,d0.w
+  ble.s .ordered
+  exg d0.l,d1.l
+.ordered:
+  cmpi.w #0,d0.w
+  bge.s .left_clipped
+  clr.w d0.w
+.left_clipped:
+  cmpi.w #SCREEN_WIDTH,d1.w
+  ble.s .right_clipped
+  move.w #SCREEN_WIDTH,d1.w
+.right_clipped:
+  cmp.w d1.w,d0.w
+  bge.s .advance_edges
+
+  // Accumulate the union of all triangle spans for this scanline. It becomes
+  // the exact dirty region cleared at the beginning of the next frame.
+  cmp.w (a5),d0.w
+  bge.s .dirty_left_ok
+  move.w d0.w,(a5)
+.dirty_left_ok:
+  cmp.w (a6),d1.w
+  ble.s .dirty_right_ok
+  move.w d1.w,(a6)
+.dirty_right_ok:
+  // Per-span diagnostics are disabled in this hot path. Their status fields
+  // remain zero; visible-face/frame counters and all image state are retained.
+  bsr.w fast_packed_span
+
+.advance_edges:
+  add.l d6.l,d4.l
+  add.l d7.l,d5.l
+  adda.l #256,a4
+  addq.l #2,a5
+  addq.l #2,a6
+  cmpa.l a3,a4
+  blt.w .scanline
+.done:
+  movem.l (sp)+,d0-d7/a0-a6
+]
+
+// d0/d1=clipped exclusive span, a4=packed row, a2=repeated color value,
+// a1=prefix-mask table. Only d0-d3/a0 are volatile, including partial edges.
+// XOR masked replacement preserves adjacent samples with one memory RMW.
+[fast_packed_span
+  move.w d0.w,d3.w
+  lsr.w #3,d3.w
+  lsl.w #2,d3.w
+  move.l a4,a0
+  adda.w d3.w,a0
+  sub.w d0.w,d1.w
+  andi.w #7,d0.w
+  beq.s .interior
+  moveq #8,d3.l
+  sub.w d0.w,d3.w
+  cmp.w d3.w,d1.w
+  bcc.s .left_cell
+  add.w d0.w,d1.w
+  lsl.w #2,d0.w
+  lsl.w #2,d1.w
+  move.l 0(a1,d0.w),d3.l
+  move.l 0(a1,d1.w),d2.l
+  eor.l d2.l,d3.l
+  bra.s .masked_tail
+.left_cell:
+  sub.w d3.w,d1.w
+  lsl.w #2,d0.w
+  move.l 0(a1,d0.w),d3.l
+  not.l d3.l
+  move.l (a0),d2.l
+  move.l a2,d0.l
+  eor.l d0.l,d2.l
+  and.l d3.l,d2.l
+  eor.l d2.l,(a0)+
+.interior:
+  move.w d1.w,d0.w
+  lsr.w #3,d0.w
+  beq.s .tail
+  subq.w #1,d0.w
+  move.l a2,d2.l
+.longs:
+  move.l d2.l,(a0)+
+  dbra d0.w,.longs
+.tail:
+  andi.w #7,d1.w
+  beq.s .done
+  lsl.w #2,d1.w
+  move.l 0(a1,d1.w),d3.l
+.masked_tail:
+  move.l (a0),d2.l
+  move.l a2,d0.l
+  eor.l d0.l,d2.l
+  and.l d3.l,d2.l
+  eor.l d2.l,(a0)
+.done:
+]
+
+
+// Startup only: initialize both hidden/output halves before enabling the display.
+[clear_output_pages
+  movem.l d0/a0,-(sp)
+  move.l #OUTPUT_VRAM_0,a0
+  move.w #$ffff,d0.w
+.clear:
+  clr.l (a0)+
+  clr.l (a0)+
+  dbra d0.w,.clear
+  movem.l (sp)+,d0/a0
+]
+
+// d0=left inclusive, d1=right exclusive, d2=sample Y, d3=8-nibble color.
+// Clobbers d0-d6/a0-a1 only. Callers own their loop state once per face/frame.
+// RAM is row-major packed 4bpp: 256 bytes per 512-sample scanline.
+[packed_span
+  move.w d1.w,d5.w
+  sub.w d0.w,d5.w
+  ble.w .done
+  moveq #0,d4.l
+  move.w d2.w,d4.w
+  lsl.l #8,d4.l
+  move.l draw_vram_base.l,a0
+  adda.l d4.l,a0
+  moveq #0,d6.l
+  move.w d0.w,d6.w
+  lsr.w #3,d6.w
+  lsl.w #2,d6.w
+  adda.w d6.w,a0
+  lea packed_prefix_masks(pc),a1
+  move.w d0.w,d4.w
+  andi.w #7,d4.w
+  beq.s .interior
+  moveq #8,d6.l
+  sub.w d4.w,d6.w
+  cmp.w d6.w,d5.w
+  bcc.s .left_cell
+  // Entire span lies in one partial longword.
+  add.w d4.w,d5.w
+  lsl.w #2,d4.w
+  lsl.w #2,d5.w
+  move.l 0(a1,d4.w),d0.l
+  move.l 0(a1,d5.w),d1.l
+  eor.l d1.l,d0.l
+  bra.w .masked_tail
+.left_cell:
+  sub.w d6.w,d5.w
+  lsl.w #2,d4.w
+  move.l 0(a1,d4.w),d0.l
+  not.l d0.l
+  move.l d3.l,d1.l
+  and.l d0.l,d1.l
+  not.l d0.l
+  and.l (a0),d0.l
+  or.l d1.l,d0.l
+  move.l d0.l,(a0)+
+.interior:
+  move.w d5.w,d6.w
+  lsr.w #3,d6.w
+  beq.s .tail
+  subq.w #1,d6.w
+.longs:
+  move.l d3.l,(a0)+
+  dbra d6.w,.longs
+.tail:
+  andi.w #7,d5.w
+  beq.s .done
+  lsl.w #2,d5.w
+  move.l 0(a1,d5.w),d0.l
+.masked_tail:
+  move.l d3.l,d1.l
+  and.l d0.l,d1.l
+  not.l d0.l
+  and.l (a0),d0.l
+  or.l d1.l,d0.l
+  move.l d0.l,(a0)
+.done:
+]
+
+// Resolving old+new sample coverage also removes pixels on a shrinking silhouette.
+// Each physical output half needs one complete resolve to establish its backdrop.
+[begin_resolve_spans
+  movem.l d0-d3/a0-a1,-(sp)
+  move.w draw_page.l,d0.w
+  add.w d0.w,d0.w
+  lea page_initialized(pc),a0
+  move.w #OUTPUT_WIDTH,d2.w
+  moveq #0,d3.l
+  tst.w 0(a0,d0.w)
+  bne.s .ready
+  moveq #0,d2.l
+  move.w #OUTPUT_WIDTH,d3.w
+.ready:
+  lea resolve_span_left(pc),a0
+  lea resolve_span_right(pc),a1
+  move.w #255,d0.w
+.row:
+  move.w d2.w,(a0)+
+  move.w d3.w,(a1)+
+  dbra d0.w,.row
+  movem.l (sp)+,d0-d3/a0-a1
+]
+
+// Merge both source rows of each 2x2 output row, rounded outward horizontally.
+[merge_resolve_spans
+  movem.l d0-d4/a0-a3,-(sp)
+  move.l dirty_left_pointer.l,a0
+  move.l dirty_right_pointer.l,a1
+  lea resolve_span_left(pc),a2
+  lea resolve_span_right(pc),a3
+  move.w #255,d4.w
+.row:
+  move.w (a0)+,d0.w
+  move.w (a0)+,d2.w
+  cmp.w d2.w,d0.w
+  ble.s .left
+  move.w d2.w,d0.w
+.left:
+  move.w (a1)+,d1.w
+  move.w (a1)+,d3.w
+  cmp.w d3.w,d1.w
+  bge.s .right
+  move.w d3.w,d1.w
+.right:
+  cmp.w d1.w,d0.w
+  bge.s .next
+  lsr.w #1,d0.w
+  addq.w #1,d1.w
+  lsr.w #1,d1.w
+  cmp.w (a2),d0.w
+  bge.s .left_kept
+  move.w d0.w,(a2)
+.left_kept:
+  cmp.w (a3),d1.w
+  ble.s .next
+  move.w d1.w,(a3)
+.next:
+  addq.l #2,a2
+  addq.l #2,a3
+  dbra d4.w,.row
+  movem.l (sp)+,d0-d4/a0-a3
+]
+
+// CPU resolves four independent indexed samples through the 65536-word LUT.
+// index = (top packed byte << 8) | bottom packed byte. LUT is uploaded at $40000.
+[resolve_aa
+  movem.l d0-d7/a0-a6,-(sp)
+  move.l #AA_LUT,a1
+  move.l draw_vram_base.l,a5
+  move.l output_vram_base.l,a4
+  clr.l resolved_pixels.l
+  moveq #0,d7.l
+.row:
+  move.w d7.w,d0.w
+  add.w d0.w,d0.w
+  lea resolve_span_left(pc),a6
+  moveq #0,d2.l
+  move.w 0(a6,d0.w),d2.w
+  lea resolve_span_right(pc),a6
+  moveq #0,d6.l
+  move.w 0(a6,d0.w),d6.w
+  sub.w d2.w,d6.w
+  ble.w .next
+  add.l d6.l,resolved_pixels.l
+  move.l a5,a2
+  adda.w d2.w,a2
+  lea 256(a2),a3
+  move.l a4,a0
+  add.w d2.w,d2.w
+  adda.w d2.w,a0
+  lea solid_output_patterns(pc),a6
+  // MC68000 longword reads need an even address. Resolve one output when
+  // the left byte is odd; a2/a3 then stay aligned through four/two-pixel blocks.
+  move.l a2,d2.l
+  btst #0,d2.l
+  beq.s .blocks
+  moveq #0,d0.l
+  move.b (a2)+,d0.b
+  lsl.w #8,d0.w
+  move.b (a3)+,d0.b
+  add.l d0.l,d0.l
+  move.w 0(a1,d0.l),(a0)+
+  subq.w #1,d6.w
+  beq.w .next
+.blocks:
+  cmpi.w #4,d6.w
+  bcs.s .tail
+  move.l (a2),d0.l
+  cmp.l (a3),d0.l
+  bne.s .two_pixels
+  move.l d0.l,d2.l
+  ror.l #4,d2.l
+  cmp.l d0.l,d2.l
+  bne.s .two_pixels
+  // Equal rows plus equality after a four-bit rotation proves all sixteen
+  // samples are the same index. Its exact 2x2 average is the solid color.
+  andi.w #$000f,d2.w
+  lsl.w #2,d2.w
+  move.l 0(a6,d2.w),d1.l
+.uniform_write:
+  move.l d1.l,(a0)+
+  move.l d1.l,(a0)+
+  addq.l #4,a2
+  addq.l #4,a3
+  subq.w #4,d6.w
+  beq.s .next
+.uniform_run:
+  // Reuse the proven source pattern and output color across a solid run.
+  // Both rows must still match exactly before each further four-output write.
+  cmpi.w #4,d6.w
+  bcs.s .tail
+  cmp.l (a2),d0.l
+  bne.s .blocks
+  cmp.l (a3),d0.l
+  beq.s .uniform_write
+  bra.s .blocks
+.two_pixels:
+  // Exact scalar fallback for two outputs preserves even source alignment.
+  moveq #0,d0.l
+  move.b (a2)+,d0.b
+  lsl.w #8,d0.w
+  move.b (a3)+,d0.b
+  add.l d0.l,d0.l
+  move.w 0(a1,d0.l),(a0)+
+  moveq #0,d0.l
+  move.b (a2)+,d0.b
+  lsl.w #8,d0.w
+  move.b (a3)+,d0.b
+  add.l d0.l,d0.l
+  move.w 0(a1,d0.l),(a0)+
+  subq.w #2,d6.w
+  bra.s .blocks
+.tail:
+  // The one-to-three output tail never reads beyond the dirty interval.
+  subq.w #1,d6.w
+.pixel:
+  moveq #0,d0.l
+  move.b (a2)+,d0.b
+  lsl.w #8,d0.w
+  move.b (a3)+,d0.b
+  add.l d0.l,d0.l
+  move.w 0(a1,d0.l),(a0)+
+  dbra d6.w,.pixel
+.next:
+  adda.l #512,a5
+  adda.l #1024,a4
+  addq.w #1,d7.w
+  cmpi.w #OUTPUT_HEIGHT,d7.w
+  blt.w .row
+  movem.l (sp)+,d0-d7/a0-a6
+]
+
+[demo_data
+current_angle:
+  defw 0
+draw_page:
+  defw 1
+draw_vram_base:
+  defl VRAM_PAGE_1
+output_vram_base:
+  defl OUTPUT_VRAM_1
+page_initialized:
+  defw 0,0
+clear_row:
+  defw 0
+resolved_pixels:
+  defl 0
+crtc_words:
+  defw $002d,$0004,$0006,$0026,$0237,$0005,$0028,$0228
+packed_prefix_masks:
+  defl $00000000,$f0000000,$ff000000,$fff00000,$ffff0000,$fffff000,$ffffff00,$fffffff0,$ffffffff
+dirty_left_pointer:
+  defl 0
+dirty_right_pointer:
+  defl 0
+page_bounds:
+  defw SCREEN_HEIGHT,0,SCREEN_HEIGHT,0
+have_previous_bounds:
+  defw 0
+current_min_x:
+  defw 0
+current_max_x:
+  defw 0
+current_min_y:
+  defw 0
+current_max_y:
+  defw 0
+previous_min_x:
+  defw 0
+previous_max_x:
+  defw 0
+previous_min_y:
+  defw 0
+previous_max_y:
+  defw 0
+vertices_left:
+  defw 0
+faces_left:
+  defw 0
+face_index:
+  defw 0
+tmp_x:
+  defw 0
+tmp_y:
+  defw 0
+tmp_z:
+  defw 0
+tmp_x1:
+  defw 0
+tmp_z1:
+  defw 0
+tmp_y2:
+  defw 0
+tmp_depth:
+  defw 0
+scan_y:
+  defw 0
+scan_end:
+  defw 0
+span_left:
+  defw 0
+span_right:
+  defw 0
+edge_hits:
+  defw 0
+triangle_color:
+  defw 0
+raster_x0:
+  defw 0
+raster_y0:
+  defw 0
+raster_x1:
+  defw 0
+raster_y1:
+  defw 0
+raster_x2:
+  defw 0
+raster_y2:
+  defw 0
+long_edge_slope:
+  defw 0
+long_edge_origin:
+  defl 0
+half_start_y:
+  defw 0
+half_end_y:
+  defw 0
+half_slope_a:
+  defw 0
+half_slope_b:
+  defw 0
+half_x_a:
+  defl 0
+half_x_b:
+  defl 0
+triangle_points:
+  align 2
+  defw 0,0,0,0,0,0
+include "build/ssaa/model_generated.inc"
+]/
