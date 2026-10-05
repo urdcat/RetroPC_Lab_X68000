@@ -1,0 +1,73 @@
+{
+  "reportId": "20261005-x68000-preservation-publication-01",
+  "requestId": "20261005-axxphorg-preservation-publication-01",
+  "reportedAt": "2026-10-05 JST",
+  "ownerThread": "019f8c98-cf3b-7143-9b4b-5534fa200976",
+  "target": "X68000 / standard 1MiB / MC68000 / RAM-entry Champon8",
+  "workspace": "D:/work/X68000で何か作ろう",
+  "scope": "Separate preservation/publication checkpoint. Native-background and scheduler development excluded from this commit.",
+  "preservation": {
+    "complete": true,
+    "root": "D:/work/X68000で何か作ろう/preserved/20261005-x68000",
+    "inventory": "D:/work/X68000で何か作ろう/preserved/20261005-x68000/INVENTORY.json",
+    "inventorySha256": "9b93de02031d51fa60fbf525820b9e86d435a90fa8ff6d292f125e87af115f20",
+    "inventorySha256Status": "Original stale local expectation retained; does not match the published 878c6aa blob or current dependency-corrected inventory. See supplement-02; do not use this old field as current integrity proof.",
+    "inventoryReconciliation": "D:/work/X68000で何か作ろう/preserved/20261005-x68000/PRESERVATION-PUBLICATION-INVENTORY-SUPPLEMENT-20261005-02.json",
+    "files": 516,
+    "originalsMovedDeletedOrOverwritten": false,
+    "originalAndCopyHashesMatched": true,
+    "entrypointsAndDependencies": "README.txt and INVENTORY.json in this preservation root",
+    "oldGames": ["HELLO", "BREAKOUT", "original local-cache polygon mini-game v04-v11"],
+    "rotationDemos": ["Star Cruiser native512", "native-fast starless", "2x2 SSAA", "fast SSAA resolve"],
+    "checkpoints": [
+      {"name":"legacy-game-v11","path":"legacy-polygon/build/player-speed-20260918/verify-1789698952021697700/candidate/guest.bin","bytes":25114,"sha256":"f220048e453fd2d4fef2eff427913f7f7a5a386a59a8507529901e5fd0ddcb76"},
+      {"name":"first-rich-v04","path":"axxphorg-first-rich-v04/build/guest.bin","bytes":34328,"sha256":"d8e14256b731aba14b057d7426aaf38efdba7ff5675577cface0cd1e77a5bb1b"},
+      {"name":"QUALITY-01","path":"axxphorg-quality01/build/artifact-guest.bin","bytes":37052,"sha256":"dc29efb8f70bde4eb7b98eacce91505f98afb4f563a2efadb5fb7e784ff55bea"}
+    ],
+    "restrictedReference": {"path":"D:/work/PC8001mkⅡで何か動かそう/tmp/starcruiser-render-opt-20260905/ports/star-cruiser/reference/Star Cruiser (Japan).md","present":true,"sha256":"662a3f4c1ae358a208dea139eb2ff4c9608d93cf94381ea22e3f4b38d21401e3","copiedOrPublished":false},
+    "dependencyCorrection": "Reader PORT actually points to the temporary frozen star-cruiser reference path above, not ports/starcruiser-dual-demo/reference. The exact live path/hash was checked after the first checkpoint; restricted material remains excluded.",
+    "missingDependencies": "Consult regenerated INVENTORY.json for xdev68k tool presence; no tool installation or ROM acquisition performed."
+  },
+  "git": {
+    "repositoryPresent": true,
+    "root": "D:/work/X68000で何か作ろう",
+    "branch": "main",
+    "headBefore": "38b96a5f657d652fd447637c85dd021f83d295bf",
+    "remote": "origin",
+    "remoteUrl": "https://github.com/urdcat/RetroPC_Lab_X68000.git",
+    "upstream": "origin/main",
+    "preExistingUnpushedCommits": [],
+    "commitComplete": true,
+    "commit": "878c6aa2213b0295e69a4cd1f788bf09737ef905",
+    "committedFileCount": 47,
+    "commitScope": "Only explicitly enumerated public files below preserved/20261005-x68000",
+    "pushComplete": true,
+    "pushDestination": "origin HEAD:main",
+    "verifiedRemoteRef": "refs/heads/main",
+    "verifiedRemoteCommit": "878c6aa2213b0295e69a4cd1f788bf09737ef905",
+    "remoteRefMatchesCommit": true,
+    "repositoryAbsent": false,
+    "remoteAbsent": false,
+    "authenticationOrPermissionBlocker": null,
+    "unrelatedDirtyPreserved": ["root .gitignore / README.md / docs/HANDOFF.md", "assembler-centralization deletions", "untracked original legacy docs/tools/src", "current prototypes/axxphorg-rich development"],
+    "excludedFromPublication": ["all ignored build payloads including derived reference geometry/BIN/AA", "commercial ROM", "session tokens/credentials", "large movie/cache", "current unverified native-background and scheduling changes"],
+    "reportFile": "Post-push local collection receipt, not part of commit 878c6aa. A CRLF-whitespace attribute refinement is also still local; preserved bytes were not altered."
+  },
+  "validation": {
+    "preservationCopiesAndHashes": "passed for all 516 entries",
+    "publishedPythonSyntax": "21 files AST parsed",
+    "secretAndAssetScan": "public file scan: source references to framePng only, no embedded image payload or token values; ROM-derived data remains ignored",
+    "historicalRuntimeRerun": false,
+    "QUALITY01SavedEvidence": "12 all-background/all-page pixel checks previously passed; normal browser software-input evidence preserved separately",
+    "gitWhitespaceCheck": "CRLF byte-exact archives produced whitespace warnings under default Git rules; source bytes intentionally retained, not cosmetically rewritten",
+    "nativeKeyboardHardwareOrFullGameAccepted": false
+  },
+  "development": {
+    "actualGameName": "AxxPhorg X68000 rich prototype",
+    "independentEntry": "D:/work/X68000で何か作ろう/prototypes/axxphorg-rich/README.txt",
+    "state": "implementation and quality repair continuing; playable speed / boss quality not yet accepted",
+    "QUALITY01BossPageHzNominal10MHz": 2.05399,
+    "currentWork": "Repair wrong mixed/solid tile branch and address high-word leakage; native512 fixed-camera background color-run codec; bounded pose scheduling and completed-image reuse",
+    "next": "Finish owned-instance pixel/geometry/sequence regression and before/after visible-input recordings; preserve the newest validated quality checkpoint separately; leave peer tabs and shared host untouched"
+  }
+}

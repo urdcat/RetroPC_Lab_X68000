@@ -1,0 +1,89 @@
+{
+  "reportId": "20261005-x68000-preservation-publication-inventory-supplement-02",
+  "reportedAt": "2026-10-05T10:15:31.026909+00:00",
+  "scope": "Metadata reconciliation and file hashing only; no emulator access, payload mutation, or all-game re-test",
+  "publication": {
+    "commit": "878c6aa2213b0295e69a4cd1f788bf09737ef905",
+    "successfulPushRecordUnchanged": true,
+    "publishedGitBlobSha256": "b6efb4a3fc505a6c0ac25c28f56f6ae7a84b767d6c5dde03f999ffbbd8fff6ea"
+  },
+  "originalReceiptExpectation": {
+    "sha256": "9b93de02031d51fa60fbf525820b9e86d435a90fa8ff6d292f125e87af115f20",
+    "matchesPublishedGitBlob": false,
+    "matchesCurrentInventory": false,
+    "classification": "Stale unmatched local intermediate expectation; exact historical bytes not recovered. Not a payload corruption diagnosis."
+  },
+  "currentInventory": {
+    "sha256": "a23075d5c8907fa32b62859a65f173617b62f0e9ec129b7f5cb79404ba0a1b99",
+    "bytes": 360832,
+    "classification": "Post-publication external-dependency correction"
+  },
+  "reason": "model_reference.py PORT was inspected after publication. Its actual existing ROM reference is under tmp/starcruiser-render-opt-20260905/ports/star-cruiser. The previous guessed path was missing. Three xdev68k tool references were also added for old Human68k samples.",
+  "differences": {
+    "topLevelKeys": [
+      "externalDependencies"
+    ],
+    "externalDependenciesBefore": 8,
+    "externalDependenciesAfter": 11,
+    "oldRestrictedReference": {
+      "path": "D:/work/PC8001mkⅡで何か動かそう/ports/starcruiser-dual-demo/reference/Star Cruiser (Japan).md",
+      "present": false,
+      "sha256": null,
+      "copied": false,
+      "publication": "external-reference-only"
+    },
+    "correctedRestrictedReference": {
+      "path": "D:/work/PC8001mkⅡで何か動かそう/tmp/starcruiser-render-opt-20260905/ports/star-cruiser/reference/Star Cruiser (Japan).md",
+      "present": true,
+      "sha256": "662a3f4c1ae358a208dea139eb2ff4c9608d93cf94381ea22e3f4b38d21401e3",
+      "copied": false,
+      "publication": "external-reference-only"
+    },
+    "addedDependencies": [
+      {
+        "path": "C:/msys64/home/urdca/xdev68k/run68/run68.exe",
+        "present": true,
+        "sha256": "bf16a17a375f0bc41ebc3bc348ec6770091aec050cdbf49008fbc93753e526a5",
+        "copied": false,
+        "publication": "external-reference-only"
+      },
+      {
+        "path": "C:/msys64/home/urdca/xdev68k/x68k_bin/HAS060.X",
+        "present": true,
+        "sha256": "6d4e825709e359d36d952c5569673fca9561259441d8de30a991d4d671ad4b13",
+        "copied": false,
+        "publication": "external-reference-only"
+      },
+      {
+        "path": "C:/msys64/home/urdca/xdev68k/x68k_bin/hlk301.x",
+        "present": true,
+        "sha256": "08d9b9a9c025557177ee10861cfc5aee84efbedd21293aee43d220f39d38acf5",
+        "copied": false,
+        "publication": "external-reference-only"
+      }
+    ]
+  },
+  "payload": {
+    "recordsUnchanged": true,
+    "entries": 516,
+    "originalAndCopyPairsRehashed": 516,
+    "allHashesAndSizesMatch": true,
+    "removedOverwrittenOrMoved": false,
+    "orderedRecordDigestSha256": "ecbdd42da348c488e292853ea7e058e57cbbd6a7266a6df5cea84e735e65d317"
+  },
+  "byteExactSnapshots": [
+    {
+      "path": "D:\\work\\X68000で何か作ろう\\preserved\\20261005-x68000\\inventory-snapshots\\published-878c6aa-inventory.json",
+      "bytes": 355253,
+      "sha256": "b6efb4a3fc505a6c0ac25c28f56f6ae7a84b767d6c5dde03f999ffbbd8fff6ea"
+    },
+    {
+      "path": "D:\\work\\X68000で何か作ろう\\preserved\\20261005-x68000\\inventory-snapshots\\dependency-corrected-a23075-inventory.json",
+      "bytes": 360832,
+      "sha256": "a23075d5c8907fa32b62859a65f173617b62f0e9ec129b7f5cb79404ba0a1b99"
+    }
+  ],
+  "independentCoordinatorEvidence": "D:/work/PolygonGames/proposals/20261005-axxphorg-preservation-publication-01/X68000-INVENTORY-COMPARISON.json",
+  "restrictedMaterialAcquiredCopiedOrPublished": false,
+  "resolution": "Published and current inventory bytes are now separately identified. Only dependency metadata differs. Preserve the unmatched 9b93 expectation in the original receipt; do not silently relabel it as a verified snapshot."
+}

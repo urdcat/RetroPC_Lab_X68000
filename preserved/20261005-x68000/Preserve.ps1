@@ -92,7 +92,10 @@ $dependencies = @(
     'D:/work/PolygonGames/specs/20260916-pyuta-cross-machine-reproduction-v1/SPEC.md',
     'C:/Users/urdca/.cache/codex-runtimes/codex-primary-runtime/dependencies/python/python.exe',
     'D:/work/PC8001mkⅡで何か動かそう/ports/starcruiser-dual-demo/tools/model_reference.py',
-    'D:/work/PC8001mkⅡで何か動かそう/ports/starcruiser-dual-demo/reference/Star Cruiser (Japan).md'
+    'D:/work/PC8001mkⅡで何か動かそう/tmp/starcruiser-render-opt-20260905/ports/star-cruiser/reference/Star Cruiser (Japan).md',
+    'C:/msys64/home/urdca/xdev68k/run68/run68.exe',
+    'C:/msys64/home/urdca/xdev68k/x68k_bin/HAS060.X',
+    'C:/msys64/home/urdca/xdev68k/x68k_bin/hlk301.x'
 )
 $external = foreach ($dependency in $dependencies) {
     $exists = Test-Path -LiteralPath $dependency -PathType Leaf
