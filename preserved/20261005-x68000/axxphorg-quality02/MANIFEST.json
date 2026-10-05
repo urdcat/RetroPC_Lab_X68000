@@ -1,0 +1,214 @@
+{
+  "reportId": "20261005-x68000-axxphorg-quality02-snapshot",
+  "binarySha256": "eca7e44515196a5a259ca7de020d818648b2003b4224391b99c959f867483c7b",
+  "backgroundSha256": "6dfea4e2db634888b818df509808c0938a84558544acae25a4b7b1e8463ec342",
+  "files": [
+    {
+      "original": "D:\\work\\X68000で何か作ろう\\prototypes\\axxphorg-rich\\guest.m68",
+      "preserved": "source/guest.m68",
+      "bytes": 22648,
+      "sha256": "ccd919612265d846940d469a5c6d5fb2204789d31c8f59e4c7a0764d3255a295",
+      "publication": "authored-source-or-compact-report"
+    },
+    {
+      "original": "D:\\work\\X68000で何か作ろう\\prototypes\\axxphorg-rich\\quality.m68",
+      "preserved": "source/quality.m68",
+      "bytes": 16593,
+      "sha256": "e54ee804489f969413e00934a54b7e4949fb6e6289a7d0a4fac1d0707a810306",
+      "publication": "authored-source-or-compact-report"
+    },
+    {
+      "original": "D:\\work\\X68000で何か作ろう\\prototypes\\axxphorg-rich\\native_bg.m68",
+      "preserved": "source/native_bg.m68",
+      "bytes": 1721,
+      "sha256": "7828b5bc7d35dd2474321371b6ba4e85542a91ff542222c4ee499acf53566849",
+      "publication": "authored-source-or-compact-report"
+    },
+    {
+      "original": "D:\\work\\X68000で何か作ろう\\prototypes\\axxphorg-rich\\build.py",
+      "preserved": "source/build.py",
+      "bytes": 14393,
+      "sha256": "98c0985cb13a14d36040a19859e390ab266da827f199ebb6bd3be72e585e2f97",
+      "publication": "authored-source-or-compact-report"
+    },
+    {
+      "original": "D:\\work\\X68000で何か作ろう\\prototypes\\axxphorg-rich\\native_background.py",
+      "preserved": "source/native_background.py",
+      "bytes": 3715,
+      "sha256": "43d6c960d09cde2051d84e1df3044eb8f56f7978b021633d9d92b56bcaeaa0ee",
+      "publication": "authored-source-or-compact-report"
+    },
+    {
+      "original": "D:\\work\\X68000で何か作ろう\\prototypes\\axxphorg-rich\\probe_native_background.py",
+      "preserved": "source/probe_native_background.py",
+      "bytes": 2617,
+      "sha256": "e81238a93bc5cc73c080f18cc89a42a06f90db5ba6025257f19f4deb9fa58004",
+      "publication": "authored-source-or-compact-report"
+    },
+    {
+      "original": "D:\\work\\X68000で何か作ろう\\prototypes\\axxphorg-rich\\runtime.py",
+      "preserved": "source/runtime.py",
+      "bytes": 8953,
+      "sha256": "2da6ae86bd20f0599f3d90a1ae7207e23567e1a5c9493d9363448212510689bb",
+      "publication": "authored-source-or-compact-report"
+    },
+    {
+      "original": "D:\\work\\X68000で何か作ろう\\prototypes\\axxphorg-rich\\controller.py",
+      "preserved": "source/controller.py",
+      "bytes": 4856,
+      "sha256": "6648be1baa0b053d45f63b9b8d866b95e8e4b86469ca3af3d5ef93f4d86f5846",
+      "publication": "authored-source-or-compact-report"
+    },
+    {
+      "original": "D:\\work\\X68000で何か作ろう\\prototypes\\axxphorg-rich\\controller.html",
+      "preserved": "source/controller.html",
+      "bytes": 5066,
+      "sha256": "8c3868ee29a9cb9a4c62490d31b28ce3b076915ad924fc22bdbb494dbe01ab69",
+      "publication": "authored-source-or-compact-report"
+    },
+    {
+      "original": "D:\\work\\X68000で何か作ろう\\prototypes\\axxphorg-rich\\settings.json",
+      "preserved": "source/settings.json",
+      "bytes": 760,
+      "sha256": "b7421cb613f5f13c04960d332669e732c65cd39310af55275eb9a838a7b32c64",
+      "publication": "authored-source-or-compact-report"
+    },
+    {
+      "original": "D:\\work\\X68000で何か作ろう\\prototypes\\axxphorg-rich\\verify.py",
+      "preserved": "source/verify.py",
+      "bytes": 12617,
+      "sha256": "18471ec99987307781767d99902d483e1c194496bed5ffb7ce5ccb8cf03da55a",
+      "publication": "authored-source-or-compact-report"
+    },
+    {
+      "original": "D:\\work\\X68000で何か作ろう\\prototypes\\axxphorg-rich\\profile_quality.py",
+      "preserved": "source/profile_quality.py",
+      "bytes": 2605,
+      "sha256": "3af339e7dceecd560c23191b7eb35d430344cb30baad1008fc756d76d91d5e5b",
+      "publication": "authored-source-or-compact-report"
+    },
+    {
+      "original": "D:\\work\\X68000で何か作ろう\\prototypes\\axxphorg-rich\\profile_pose.py",
+      "preserved": "source/profile_pose.py",
+      "bytes": 1820,
+      "sha256": "32da5c13ff646da3087128db4de61bbfca942b487dacd0412ed67564f374e79c",
+      "publication": "authored-source-or-compact-report"
+    },
+    {
+      "original": "D:\\work\\X68000で何か作ろう\\prototypes\\axxphorg-rich\\compare_latency.py",
+      "preserved": "source/compare_latency.py",
+      "bytes": 7684,
+      "sha256": "97b52c980d6e7f19d59ccbcef7a1881ef02e036c2691eda6387c4445de3282d7",
+      "publication": "authored-source-or-compact-report"
+    },
+    {
+      "original": "D:\\work\\X68000で何か作ろう\\prototypes\\axxphorg-rich\\capture_quality_ui.py",
+      "preserved": "source/capture_quality_ui.py",
+      "bytes": 2907,
+      "sha256": "87e1246b8addf1728113dff8f4fd844b86c3277a459e9701e902115b4bc0761f",
+      "publication": "authored-source-or-compact-report"
+    },
+    {
+      "original": "D:\\work\\X68000で何か作ろう\\prototypes\\axxphorg-rich\\quality02_report.py",
+      "preserved": "source/quality02_report.py",
+      "bytes": 10960,
+      "sha256": "9938798d9809d52403214eaea07a51de3089f5ea0cac448b4f3972d6c013d719",
+      "publication": "authored-source-or-compact-report"
+    },
+    {
+      "original": "D:\\work\\X68000で何か作ろう\\prototypes\\axxphorg-rich\\README.txt",
+      "preserved": "source/README.txt",
+      "bytes": 3774,
+      "sha256": "267bada076b30f0b62503135d6cce8afafb7da0a33a5bde0327e67d6131cfa8f",
+      "publication": "authored-source-or-compact-report"
+    },
+    {
+      "original": "D:\\work\\X68000で何か作ろう\\prototypes\\axxphorg-rich\\RESUME.txt",
+      "preserved": "source/RESUME.txt",
+      "bytes": 10197,
+      "sha256": "4ccef7447d3468c00e3f0b58414fdeb757b1d0edc971b2cca42561ddc71299b7",
+      "publication": "authored-source-or-compact-report"
+    },
+    {
+      "original": "D:\\work\\X68000で何か作ろう\\prototypes\\axxphorg-rich\\QUALITY-20261005-02.json",
+      "preserved": "source/QUALITY-20261005-02.json",
+      "bytes": 97279,
+      "sha256": "44a4144787ee0de3e81ba698fa58f47238d561a506a0e804f430dc431987e04f",
+      "publication": "authored-source-or-compact-report"
+    },
+    {
+      "original": "D:\\work\\X68000で何か作ろう\\prototypes\\axxphorg-rich\\build\\guest.bin",
+      "preserved": "build/artifact-guest.bin",
+      "bytes": 37926,
+      "sha256": "eca7e44515196a5a259ca7de020d818648b2003b4224391b99c959f867483c7b",
+      "publication": "local-ignored-generated-artifact"
+    },
+    {
+      "original": "D:\\work\\X68000で何か作ろう\\prototypes\\axxphorg-rich\\build\\guest.m68",
+      "preserved": "build/artifact-guest.m68",
+      "bytes": 147846,
+      "sha256": "30c5b91323bb21a8e72af4cf72075d5f9cce7a508331c1def2b230ff1372e378",
+      "publication": "local-ignored-generated-artifact"
+    },
+    {
+      "original": "D:\\work\\X68000で何か作ろう\\prototypes\\axxphorg-rich\\build\\background.bin",
+      "preserved": "build/artifact-background.bin",
+      "bytes": 579194,
+      "sha256": "6dfea4e2db634888b818df509808c0938a84558544acae25a4b7b1e8463ec342",
+      "publication": "local-ignored-generated-artifact"
+    },
+    {
+      "original": "D:\\work\\X68000で何か作ろう\\prototypes\\axxphorg-rich\\build\\build.json",
+      "preserved": "build/artifact-build.json",
+      "bytes": 42183,
+      "sha256": "73a01d67bbccf62dd2f7291a2f6b749347dce615caa0f6fd42d881d8df56b04d",
+      "publication": "local-ignored-generated-artifact"
+    },
+    {
+      "original": "D:\\work\\X68000で何か作ろう\\prototypes\\axxphorg-rich\\build\\verification-1791194791688474900\\result.json",
+      "preserved": "build/verification-result.json",
+      "bytes": 50632,
+      "sha256": "f2725fe42dc52f5aa1b7698107188e4965b2c892aad574b2f87da7f48fa6a20f",
+      "publication": "local-ignored-generated-artifact"
+    },
+    {
+      "original": "D:\\work\\X68000で何か作ろう\\prototypes\\axxphorg-rich\\build\\quality02-before-1791191125095273000\\result.json",
+      "preserved": "build/before-input-result.json",
+      "bytes": 114442,
+      "sha256": "d65b1a041a3e8b5d871aefeb63f5236defbf556f4452594ccba0fe3ad9672f40",
+      "publication": "local-ignored-generated-artifact"
+    },
+    {
+      "original": "D:\\work\\X68000で何か作ろう\\prototypes\\axxphorg-rich\\build\\quality02-after-1791195203997732800\\result.json",
+      "preserved": "build/after-input-result.json",
+      "bytes": 178664,
+      "sha256": "0749dd6fb1403115bcebca47fc724cc2cf96308cab019508aec437675b654f26",
+      "publication": "local-ignored-generated-artifact"
+    },
+    {
+      "original": "D:\\work\\X68000で何か作ろう\\prototypes\\axxphorg-rich\\build\\QUALITY02-UI.json",
+      "preserved": "build/UI-result.json",
+      "bytes": 89383,
+      "sha256": "badbfb83f7e6fe800e8c0397e3ec3f1e5fa5fa2f343692d74fe77ab552af679d",
+      "publication": "local-ignored-generated-artifact"
+    },
+    {
+      "original": "D:\\work\\X68000で何か作ろう\\prototypes\\axxphorg-rich\\build\\quality-profile-1791195609018949800.json",
+      "preserved": "build/pipeline-00.json",
+      "bytes": 7231,
+      "sha256": "5e5d06875e9647b8a7cee58641602a1766603de4efb6a4d78f1785d78e024de8",
+      "publication": "local-ignored-generated-artifact"
+    },
+    {
+      "original": "D:\\work\\X68000で何か作ろう\\prototypes\\axxphorg-rich\\build\\quality-profile-1791195610346416300.json",
+      "preserved": "build/pipeline-01.json",
+      "bytes": 7232,
+      "sha256": "df708c371cbf4095ea3e84d7bff22659c52b2e413ce6f07b1fb06b38ba571a73",
+      "publication": "local-ignored-generated-artifact"
+    }
+  ],
+  "originalsUnmodified": true,
+  "entryPoint": "prototypes/axxphorg-rich/README.txt; build from the canonical project layout using published frozen legacy renderer and pinned external common artwork",
+  "classification": "Quality and input-latency repair checkpoint; NOT playable/full-game/native-input/hardware acceptance",
+  "notIncluded": "commercial ROM, shared credentials, large oracle cache or video; original 516-file inventory remains separately frozen"
+}

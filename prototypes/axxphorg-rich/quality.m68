@@ -1,0 +1,851 @@
+// Quality repair overrides. CPU-generated local 3D, fixed camera, tile damage.
+[pose_jobs
+  move.w #0,render_budget.l
+  tst.l FLIPS.l
+  beq.s .bootstrap
+  // One urgent image-publication pass at an input edge. Completed images remain
+  // valid; this is not repeated indefinitely while a key is held.
+  move.w KEYS.l,d0.w
+  move.w d0.w,scheduled_keys.l
+  cmp.w last_published_keys.l,d0.w
+  bne.s .done
+  bra.s .render
+.bootstrap:
+  move.w #6,render_budget.l
+.render:
+  bsr.w render_one
+  subq.w #1,render_budget.l
+  bpl.s .render
+.done:
+]
+
+[late_player_snapshot
+  move.w player_x.l,d0.w
+  move.w d0.w,snapshot_player_x.l
+  move.w player_z.l,d2.w
+  move.w d2.w,snapshot_player_z.l
+  moveq #0,d1.l
+  bsr.w project
+  move.l #OBJS,a6
+  move.w d0.w,(a6)
+  move.w d1.w,2(a6)
+  move.w d2.w,4(a6)
+]
+
+[begin_damage_page
+  move.l #DRAW_DIRTY,a0
+  moveq #0,d0.l
+  move.w #191,d1.w
+.clear:
+  move.l d0.l,(a0)+
+  dbra d1.w,.clear
+]
+
+[clamp_player_viewport
+  // Fixed projection, depth-dependent world boundary. The craft cannot leave
+  // the visible viewport just because it moves nearer to the unchanged camera.
+  movem.l d0-d2,-(sp)
+  moveq #0,d0.l
+  move.w player_z.l,d0.w
+  addi.w #140,d0.w
+  muls.w #12551,d0.l
+  addi.l #1263720,d0.l
+  asr.l #7,d0.l
+  asr.l #7,d0.l
+  mulu.w #160,d0.l
+  divu.w #310,d0.l
+  cmpi.w #180,d0.w
+  ble.s .positive
+  move.w #180,d0.w
+.positive:
+  cmp.w player_x.l,d0.w
+  bge.s .negative
+  move.w d0.w,player_x.l
+.negative:
+  neg.w d0.w
+  cmp.w player_x.l,d0.w
+  ble.s .done
+  move.w d0.w,player_x.l
+.done:
+  movem.l (sp)+,d0-d2
+]
+
+[render_background_tile
+  movem.l a0-a1,-(sp)
+  move.l #TILE_DIRTY,a0
+  lea 768(a0),a1
+  move.b #1,0(a0,d0.w)
+  move.b #1,0(a1,d0.w)
+  movem.l (sp)+,a0-a1
+]
+
+// Transient sparks invalidate only the touched tile columns, on both pages.
+[mark_row
+  movem.l d0-d5/a0-a1,-(sp)
+  subi.w #64,d1.w
+  bmi.w .done
+  cmpi.w #384,d1.w
+  bge.w .done
+  tst.w d0.w
+  bge.s .left
+  clr.w d0.w
+.left:
+  cmpi.w #512,d3.w
+  ble.s .right
+  move.w #512,d3.w
+.right:
+  cmp.w d3.w,d0.w
+  bge.w .done
+  subq.w #1,d3.w
+  lsr.w #4,d0.w
+  lsr.w #4,d3.w
+  lsr.w #4,d1.w
+  lsl.w #5,d1.w
+  add.w d1.w,d0.w
+  add.w d1.w,d3.w
+  move.l #TILE_DIRTY,a0
+  lea 768(a0),a1
+.tile:
+  move.b #1,0(a0,d0.w)
+  move.b #1,0(a1,d0.w)
+  addq.w #1,d0.w
+  cmp.w d3.w,d0.w
+  ble.s .tile
+.done:
+  movem.l (sp)+,d0-d5/a0-a1
+]
+
+// Damage is derived from the actual image last drawn on each physical page.
+[mark_object
+]
+
+// d0/d1=center, d2=local center, a0=actual occupied bbox. Not the image arena.
+[mark_image_rect
+  movem.l d0-d7/a0,-(sp)
+  sub.w d2.w,d0.w
+  sub.w d2.w,d1.w
+  move.w d0.w,d3.w
+  move.w d1.w,d4.w
+  add.w (a0),d0.w
+  add.w 2(a0),d1.w
+  add.w 4(a0),d3.w
+  add.w 6(a0),d4.w
+  subq.w #1,d3.w
+  subq.w #1,d4.w
+  tst.w d0.w
+  bge.s .x0
+  clr.w d0.w
+.x0:
+  cmpi.w #64,d1.w
+  bge.s .y0
+  move.w #64,d1.w
+.y0:
+  cmpi.w #511,d3.w
+  ble.s .x1
+  move.w #511,d3.w
+.x1:
+  cmpi.w #447,d4.w
+  ble.s .y1
+  move.w #447,d4.w
+.y1:
+  cmp.w d3.w,d0.w
+  bgt.w .done
+  cmp.w d4.w,d1.w
+  bgt.w .done
+  subi.w #64,d1.w
+  subi.w #64,d4.w
+  lsr.w #4,d0.w
+  lsr.w #4,d3.w
+  lsr.w #4,d1.w
+  lsr.w #4,d4.w
+  move.l #TILE_DIRTY,a0
+  tst.w draw_page.l
+  beq.s .row
+  adda.w #768,a0
+.row:
+  move.w d1.w,d5.w
+  lsl.w #5,d5.w
+  add.w d0.w,d5.w
+  move.w d3.w,d6.w
+  sub.w d0.w,d6.w
+.column:
+  move.b #1,0(a0,d5.w)
+  addq.w #1,d5.w
+  dbra d6.w,.column
+  addq.w #1,d1.w
+  cmp.w d4.w,d1.w
+  ble.s .row
+.done:
+  movem.l (sp)+,d0-d7/a0
+]
+
+[sync_object_damage
+  move.l #PAGE_OBJECTS,a5
+  tst.w draw_page.l
+  beq.s .page
+  adda.w #168,a5
+.page:
+  move.l #OBJS,a6
+  move.l #IMAGE_GENERATIONS,a4
+  lea image_descriptors(pc),a3
+  moveq #6,d7.l
+.object:
+  moveq #0,d6.l
+.compare:
+  move.w 0(a5,d6.w),d0.w
+  cmp.w 0(a6,d6.w),d0.w
+  bne.s .changed
+  addq.w #2,d6.w
+  cmpi.w #12,d6.w
+  blt.s .compare
+  move.w (a4),d0.w
+  cmp.w 12(a5),d0.w
+  beq.s .next
+.changed:
+  move.w 8(a3),d2.w
+  tst.w 10(a5)
+  beq.s .new
+  tst.w 6(a5)
+  bmi.s .new
+  move.w (a5),d0.w
+  move.w 2(a5),d1.w
+  lea 16(a5),a0
+  bsr.w mark_image_rect
+.new:
+  tst.w 10(a6)
+  beq.s .save
+  tst.w 6(a6)
+  bmi.s .save
+  move.w (a6),d0.w
+  move.w 2(a6),d1.w
+  move.w #6,d3.w
+  sub.w d7.w,d3.w
+  lsl.w #3,d3.w
+  move.l #IMAGE_BOUNDS,a0
+  adda.w d3.w,a0
+  bsr.w mark_image_rect
+.save:
+  move.l (a6),(a5)
+  move.l 4(a6),4(a5)
+  move.l 8(a6),8(a5)
+  move.w (a4),12(a5)
+  move.w #6,d3.w
+  sub.w d7.w,d3.w
+  lsl.w #3,d3.w
+  move.l #IMAGE_BOUNDS,a0
+  adda.w d3.w,a0
+  move.l (a0),16(a5)
+  move.l 4(a0),20(a5)
+.next:
+  adda.w #24,a5
+  adda.w #16,a6
+  addq.l #2,a4
+  adda.w #12,a3
+  dbra d7.w,.object
+]
+
+[render_one
+  tst.w async_active.l
+  bne.w .continue_async
+  moveq #6,d7.l
+.find_changed:
+  addq.w #1,render_slot.l
+  cmpi.w #7,render_slot.l
+  blt.s .slot
+  clr.w render_slot.l
+.slot:
+  move.w render_slot.l,d0.w
+  mulu.w #16,d0.l
+  move.l #OBJS,a6
+  adda.l d0.l,a6
+  move.w 6(a6),d0.w
+  bmi.w .skip_slot
+  move.w render_slot.l,d1.w
+  mulu.w #8,d1.l
+  move.l #CACHE_TAGS,a2
+  adda.l d1.l,a2
+  move.w (a6),d1.w
+  subi.w #256,d1.w
+  move.w 2(a6),d2.w
+  sub.w principal_y.l,d2.w
+  tst.w 10(a6)
+  beq.s .changed
+  move.w 4(a6),d3.w
+  cmp.w (a2),d3.w
+  bne.s .changed
+  move.w 8(a6),d3.w
+  cmp.w 2(a2),d3.w
+  bne.s .changed
+  cmp.w 4(a2),d1.w
+  bne.s .changed
+  cmp.w 6(a2),d2.w
+  bne.s .changed
+  bra.w .skip_slot
+.changed:
+  move.w 4(a6),(a2)
+  move.w 8(a6),2(a2)
+  move.w d1.w,4(a2)
+  move.w d2.w,6(a2)
+  move.w 4(a6),pose_depth.l
+  move.w d1.w,pose_view_x.l
+  move.w d2.w,pose_view_y.l
+  move.w 8(a6),current_angle.l
+  mulu.w #16,d0.l
+  lea model_descriptors(pc),a0
+  adda.w d0.w,a0
+  move.l (a0)+,render_model.l
+  move.l (a0)+,render_faces.l
+  move.l (a0)+,a1
+  move.w (a0)+,render_vertex_count.l
+  move.w (a0),render_face_count.l
+  move.w current_angle.l,d0.w
+  andi.w #255,d0.w
+  mulu.w render_face_count.l,d0.l
+  adda.l d0.l,a1
+  move.l render_faces.l,a0
+  move.w render_face_count.l,d0.w
+  subq.w #1,d0.w
+.shades:
+  clr.w 6(a0)
+  move.b (a1)+,7(a0)
+  addq.l #8,a0
+  dbra d0.w,.shades
+  move.w render_slot.l,d0.w
+  mulu.w #12,d0.l
+  lea image_descriptors(pc),a0
+  adda.l d0.l,a0
+  move.l (a0)+,draw_vram_base.l
+  move.w (a0)+,render_size.l
+  move.w (a0)+,render_stride.l
+  move.w (a0),local_center.l
+  move.w render_slot.l,d0.w
+  mulu.w #768,d0.l
+  move.l #ROW_BOUNDS,a1
+  adda.l d0.l,a1
+  move.l a1,dirty_left_pointer.l
+  move.w render_size.l,d0.w
+  add.w d0.w,d0.w
+  move.l a1,a2
+  adda.w d0.w,a2
+  move.l a2,dirty_right_pointer.l
+  tst.l FLIPS.l
+  beq.w .clear_sync
+  tst.w render_slot.l
+  beq.w .clear_sync
+  move.w PART.l,async_part.l
+  move.w 6(a6),async_kind.l
+  move.l draw_vram_base.l,async_destination.l
+  move.l a1,async_bounds_destination.l
+  move.l #$f1000,draw_vram_base.l
+  move.l #$f9000,dirty_left_pointer.l
+  move.l #$f9100,dirty_right_pointer.l
+  move.l #$f1000,a0
+  moveq #0,d0.l
+  move.w #1023,d7.w
+.stage_clear:
+  move.w d7.w,d1.w
+  andi.w #7,d1.w
+  bne.s .stage_polled
+  bsr.w service
+.stage_polled:
+  move.l d0.l,(a0)+
+  move.l d0.l,(a0)+
+  move.l d0.l,(a0)+
+  move.l d0.l,(a0)+
+  move.l d0.l,(a0)+
+  move.l d0.l,(a0)+
+  move.l d0.l,(a0)+
+  move.l d0.l,(a0)+
+  dbra d7.w,.stage_clear
+  move.w #1,async_active.l
+  bra.w .reset_bounds
+.clear_sync:
+  move.l draw_vram_base.l,a0
+  move.w render_size.l,d7.w
+  subq.w #1,d7.w
+.clear_row:
+  bsr.w service
+  moveq #0,d0.l
+  move.w (a1)+,d0.w
+  move.w (a2)+,d1.w
+  sub.w d0.w,d1.w
+  ble.s .next_row
+  move.l a0,a3
+  add.w d0.w,d0.w
+  adda.w d0.w,a3
+  subq.w #1,d1.w
+.clear:
+  clr.w (a3)+
+  dbra d1.w,.clear
+.next_row:
+  adda.w render_stride.l,a0
+  dbra d7.w,.clear_row
+.reset_bounds:
+  move.l dirty_left_pointer.l,a0
+  move.l dirty_right_pointer.l,a1
+  move.w render_size.l,d1.w
+  move.w d1.w,d0.w
+  subq.w #1,d0.w
+.bounds:
+  move.w d1.w,(a0)+
+  clr.w (a1)+
+  dbra d0.w,.bounds
+  clr.w pose_invalid.l
+  bsr.w transform_vertices
+  bsr.w build_face_order
+  bsr.w sort_face_order
+  tst.w async_active.l
+  bne.w .begin_async_draw
+  bsr.w draw_faces
+.publish:
+  bsr.w record_image_bounds
+  move.w render_slot.l,d0.w
+  add.w d0.w,d0.w
+  move.l #IMAGE_GENERATIONS,a0
+  addq.w #1,0(a0,d0.w)
+  move.w render_slot.l,d0.w
+  lsl.w #2,d0.w
+  move.l #$f0090,a0
+  move.l TICK.l,0(a0,d0.w)
+  move.w render_slot.l,d0.w
+  mulu.w #16,d0.l
+  move.l #OBJS,a6
+  adda.l d0.l,a6
+  move.w #1,10(a6)
+  addq.l #1,$f0028.l
+  bra.w .done
+.begin_async_draw:
+  lea face_order(pc),a0
+  move.l a0,async_face_cursor.l
+  move.w STATUS_VISIBLE_FACES.l,async_faces_left.l
+  bra.w .done
+.continue_async:
+  move.w render_slot.l,d0.w
+  mulu.w #16,d0.l
+  move.l #OBJS,a6
+  adda.l d0.l,a6
+  move.w PART.l,d0.w
+  cmp.w async_part.l,d0.w
+  bne.s .abandon
+  move.w 6(a6),d0.w
+  cmp.w async_kind.l,d0.w
+  bne.s .abandon
+  bsr.w pose_face_slice
+  tst.w async_faces_left.l
+  bne.w .done
+  // Publish only a complete staging image; the front page never sees partial 3D.
+  move.l #$f1000,a0
+  move.l async_destination.l,a1
+  move.w #1023,d7.w
+.copy_image:
+  move.w d7.w,d0.w
+  andi.w #7,d0.w
+  bne.s .copy_polled
+  bsr.w service
+.copy_polled:
+  move.l (a0)+,(a1)+
+  move.l (a0)+,(a1)+
+  move.l (a0)+,(a1)+
+  move.l (a0)+,(a1)+
+  move.l (a0)+,(a1)+
+  move.l (a0)+,(a1)+
+  move.l (a0)+,(a1)+
+  move.l (a0)+,(a1)+
+  dbra d7.w,.copy_image
+  move.l #$f9000,a0
+  move.l async_bounds_destination.l,a1
+  move.w #127,d7.w
+.copy_bounds:
+  move.l (a0)+,(a1)+
+  dbra d7.w,.copy_bounds
+  clr.w async_active.l
+  bra.w .publish
+.abandon:
+  clr.w async_active.l
+  bra.w .done
+.skip_slot:
+  dbra d7.w,.find_changed
+.done:
+]
+
+// Reuse the inherited triangle rasterizer, at most four complete faces/pass.
+[pose_face_slice
+  movem.l d0-d7/a0-a4,-(sp)
+  move.w #4,async_slice_left.l
+.face:
+  tst.w async_faces_left.l
+  beq.w .done
+  move.l async_face_cursor.l,a0
+  move.w 2(a0),d0.w
+  lsl.w #3,d0.w
+  move.l render_faces.l,a2
+  adda.w d0.w,a2
+  lea projected_vertices(pc),a1
+  lea triangle_points(pc),a3
+  move.w (a2)+,d0.w
+  bsr.w copy_projected_xy
+  move.w (a2)+,d0.w
+  bsr.w copy_projected_xy
+  move.w (a2)+,d0.w
+  bsr.w copy_projected_xy
+  move.w (a2),triangle_color.l
+  ori.w #256,triangle_color.l
+  bsr.w raster_triangle
+  addq.l #4,async_face_cursor.l
+  subq.w #1,async_faces_left.l
+  subq.w #1,async_slice_left.l
+  bne.w .face
+.done:
+  movem.l (sp)+,d0-d7/a0-a4
+]
+
+[record_image_bounds
+  move.w render_slot.l,d0.w
+  lsl.w #3,d0.w
+  move.l #IMAGE_BOUNDS,a2
+  adda.w d0.w,a2
+  move.w render_size.l,(a2)
+  move.w render_size.l,2(a2)
+  clr.l 4(a2)
+  move.l dirty_left_pointer.l,a0
+  move.l dirty_right_pointer.l,a1
+  moveq #0,d6.l
+  move.w render_size.l,d7.w
+  subq.w #1,d7.w
+.row:
+  move.w (a0)+,d0.w
+  move.w (a1)+,d1.w
+  cmp.w d1.w,d0.w
+  bge.s .next
+  cmp.w (a2),d0.w
+  bge.s .top
+  move.w d0.w,(a2)
+.top:
+  cmp.w 2(a2),d6.w
+  bge.s .right
+  move.w d6.w,2(a2)
+.right:
+  cmp.w 4(a2),d1.w
+  ble.s .bottom
+  move.w d1.w,4(a2)
+.bottom:
+  move.w d6.w,d0.w
+  addq.w #1,d0.w
+  move.w d0.w,6(a2)
+.next:
+  addq.w #1,d6.w
+  dbra d7.w,.row
+]
+
+// Draw only dirty 16x16 tiles. No expanded RAM background or wide row unions.
+[restore_damage
+  move.l #$c00000,composite_page.l
+  move.l #TILE_DIRTY,a5
+  tst.w draw_page.l
+  beq.s .page
+  move.l #$c80000,composite_page.l
+  adda.w #768,a5
+.page:
+  move.l #TILE_IDS,a6
+  move.l #DRAW_DIRTY,a4
+  moveq #0,d7.l
+.tile:
+  move.w d7.w,d0.w
+  andi.w #31,d0.w
+  bne.s .polled
+  bsr.w service
+.polled:
+  move.b (a5),d0.b
+  or.b d0.b,(a4)+
+  tst.b (a5)
+  beq.s .next
+  bsr.w service
+  clr.b (a5)
+  move.w d7.w,d0.w
+  moveq #0,d1.l
+  move.w (a6),d1.w
+  bsr.w copy_background_tile
+  addq.l #1,$f0064.l
+.next:
+  addq.l #1,a5
+  addq.l #2,a6
+  addq.w #1,d7.w
+  cmpi.w #768,d7.w
+  blt.w .tile
+]
+
+// d0=tile index, d1=dictionary ID. LUT supplies 2x2 expansion directly to VRAM.
+[copy_background_tile
+  movem.l d0-d7/a0-a3,-(sp)
+  move.w d0.w,d2.w
+  lsr.w #5,d2.w
+  lsl.w #4,d2.w
+  addi.w #64,d2.w
+  mulu.w #1024,d2.l
+  andi.w #31,d0.w
+  lsl.w #5,d0.w
+  andi.l #65535,d0.l
+  add.l d0.l,d2.l
+  move.l composite_page.l,a0
+  adda.l d2.l,a0
+  lea background_solid_colors(pc),a2
+  moveq #0,d0.l
+  move.b 0(a2,d1.w),d0.b
+  cmpi.b #255,d0.b
+  beq.s .mixed
+  move.w d0.w,d2.w
+  swap d0.l
+  move.w d2.w,d0.w
+  addq.l #1,$f0068.l
+  bra.w .solid
+.mixed:
+  lsl.l #5,d1.l
+  move.l #$10000,a2
+  cmpi.l #$60000,d1.l
+  blt.s .dictionary
+  subi.l #$60000,d1.l
+  move.l #$b6000,a2
+.dictionary:
+  adda.l d1.l,a2
+  lea background_pair_lut(pc),a3
+  lea 1024(a0),a1
+  moveq #7,d7.l
+.row:
+  // All eight source pixels of a row equal iff a four-bit rotate is invariant.
+  // Most star rows and many flat-face rows avoid all four palette lookups.
+  move.l (a2),d1.l
+  move.l d1.l,d2.l
+  ror.l #4,d2.l
+  cmp.l d1.l,d2.l
+  bne.s .mixed_row
+  andi.l #$000f000f,d1.l
+  addq.l #4,a2
+  move.l d1.l,(a0)+
+  move.l d1.l,(a0)+
+  move.l d1.l,(a0)+
+  move.l d1.l,(a0)+
+  move.l d1.l,(a0)+
+  move.l d1.l,(a0)+
+  move.l d1.l,(a0)+
+  move.l d1.l,(a0)+
+  move.l d1.l,(a1)+
+  move.l d1.l,(a1)+
+  move.l d1.l,(a1)+
+  move.l d1.l,(a1)+
+  move.l d1.l,(a1)+
+  move.l d1.l,(a1)+
+  move.l d1.l,(a1)+
+  move.l d1.l,(a1)+
+  addq.l #1,$f006c.l
+  bra.s .row_done
+.mixed_row:
+  moveq #3,d6.l
+.pair:
+  moveq #0,d0.l
+  move.b (a2)+,d0.b
+  lsl.w #3,d0.w
+  move.l 0(a3,d0.w),d1.l
+  move.l 4(a3,d0.w),d2.l
+  move.l d1.l,(a0)+
+  move.l d2.l,(a0)+
+  move.l d1.l,(a1)+
+  move.l d2.l,(a1)+
+  dbra d6.w,.pair
+.row_done:
+  adda.w #2016,a0
+  adda.w #2016,a1
+  dbra d7.w,.row
+  bra.s .done
+.solid:
+  moveq #15,d7.l
+.blank_row:
+  move.l d0.l,(a0)+
+  move.l d0.l,(a0)+
+  move.l d0.l,(a0)+
+  move.l d0.l,(a0)+
+  move.l d0.l,(a0)+
+  move.l d0.l,(a0)+
+  move.l d0.l,(a0)+
+  move.l d0.l,(a0)+
+  adda.w #992,a0
+  dbra d7.w,.blank_row
+.done:
+  movem.l (sp)+,d0-d7/a0-a3
+]
+
+// Transparent spans are copied only inside tiles restored for this page.
+[draw_objects
+  moveq #0,d7.l
+.object:
+  move.w d7.w,d0.w
+  add.w d0.w,d0.w
+  lea object_order(pc),a0
+  move.w 0(a0,d0.w),d0.w
+  move.w d0.w,drawing_slot.l
+  mulu.w #16,d0.l
+  move.l #OBJS,a6
+  adda.l d0.l,a6
+  tst.w 6(a6)
+  bmi.w .next_object
+  tst.w 10(a6)
+  beq.w .next_object
+  move.w drawing_slot.l,d0.w
+  mulu.w #12,d0.l
+  lea image_descriptors(pc),a0
+  adda.l d0.l,a0
+  move.l (a0)+,a5
+  move.w (a0)+,drawing_size.l
+  move.w (a0)+,drawing_stride.l
+  move.w (a0),drawing_center.l
+  move.w drawing_slot.l,d0.w
+  mulu.w #768,d0.l
+  move.l #ROW_BOUNDS,a3
+  adda.l d0.l,a3
+  move.l a3,a4
+  move.w drawing_size.l,d0.w
+  add.w d0.w,d0.w
+  adda.w d0.w,a4
+  // Empty image-arena rows cost no service calls or bounds tests during blits.
+  move.w drawing_slot.l,d0.w
+  lsl.w #3,d0.w
+  move.l #IMAGE_BOUNDS,a0
+  adda.w d0.w,a0
+  move.w 2(a0),d0.w
+  move.w 6(a0),d5.w
+  sub.w d0.w,d5.w
+  ble.w .engine
+  subq.w #1,d5.w
+  move.w d0.w,d1.w
+  mulu.w drawing_stride.l,d1.l
+  adda.l d1.l,a5
+  move.w d0.w,d1.w
+  add.w d1.w,d1.w
+  adda.w d1.w,a3
+  adda.w d1.w,a4
+  move.w 2(a6),d6.w
+  sub.w drawing_center.l,d6.w
+  add.w d0.w,d6.w
+.row:
+  bsr.w service
+  move.w (a3)+,d1.w
+  move.w (a4)+,d2.w
+  cmpi.w #64,d6.w
+  blt.w .next_row
+  cmpi.w #448,d6.w
+  bge.w .next_row
+  move.w (a6),d4.w
+  sub.w drawing_center.l,d4.w
+  move.w d4.w,d0.w
+  neg.w d0.w
+  cmp.w d0.w,d1.w
+  bge.s .left
+  move.w d0.w,d1.w
+.left:
+  addi.w #512,d0.w
+  cmp.w d0.w,d2.w
+  ble.s .right
+  move.w d0.w,d2.w
+.right:
+  sub.w d1.w,d2.w
+  ble.w .next_row
+  add.w d1.w,d4.w
+  move.l a5,a2
+  add.w d1.w,d1.w
+  adda.w d1.w,a2
+  moveq #0,d0.l
+  move.w d6.w,d0.w
+  mulu.w #1024,d0.l
+  move.l composite_page.l,a0
+  adda.l d0.l,a0
+  move.w d4.w,d0.w
+  add.w d0.w,d0.w
+  adda.w d0.w,a0
+  move.w d6.w,d0.w
+  subi.w #64,d0.w
+  lsr.w #4,d0.w
+  lsl.w #5,d0.w
+  move.l #DRAW_DIRTY,a1
+  adda.w d0.w,a1
+.chunk:
+  move.w d4.w,d0.w
+  andi.w #15,d0.w
+  moveq #16,d1.l
+  sub.w d0.w,d1.w
+  cmp.w d2.w,d1.w
+  ble.s .length
+  move.w d2.w,d1.w
+.length:
+  move.w d4.w,d0.w
+  lsr.w #4,d0.w
+  tst.b 0(a1,d0.w)
+  beq.s .skip_chunk
+  move.w d1.w,d3.w
+  subq.w #1,d3.w
+.pixel:
+  move.w (a2)+,d0.w
+  btst #8,d0.l
+  beq.s .transparent
+  move.w d0.w,(a0)
+.transparent:
+  addq.l #2,a0
+  dbra d3.w,.pixel
+  bra.s .chunk_done
+.skip_chunk:
+  move.w d1.w,d0.w
+  add.w d0.w,d0.w
+  adda.w d0.w,a2
+  adda.w d0.w,a0
+.chunk_done:
+  add.w d1.w,d4.w
+  sub.w d1.w,d2.w
+  bgt.w .chunk
+.next_row:
+  adda.w drawing_stride.l,a5
+  addq.w #1,d6.w
+  dbra d5.w,.row
+.engine:
+  move.w (a6),d0.w
+  move.w 2(a6),d1.w
+  addi.w #18,d1.w
+  move.w #90,d2.w
+  bsr.w spark
+.next_object:
+  addq.w #1,d7.w
+  cmpi.w #7,d7.w
+  blt.w .object
+]
+
+[quality_state
+render_budget:
+  defw 0
+drawing_size:
+  defw 64
+drawing_stride:
+  defw 128
+drawing_center:
+  defw 32
+last_published_keys:
+  defw 0
+scheduled_keys:
+  defw 0
+snapshot_player_x:
+  defw 0
+snapshot_player_z:
+  defw -30
+async_active:
+  defw 0
+async_part:
+  defw 0
+async_kind:
+  defw 0
+async_faces_left:
+  defw 0
+async_slice_left:
+  defw 0
+async_face_cursor:
+  defl 0
+async_destination:
+  defl 0
+async_bounds_destination:
+  defl 0
+]/

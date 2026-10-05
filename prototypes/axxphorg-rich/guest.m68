@@ -1,0 +1,1218 @@
+// AxxPhorg-specific RAM-entry consumer. Existing demos are never replaced here.
+// Native512 foreground, 256-color double buffer; source256 background is 2x.
+SAMPLE_STRIDE equ 4
+BOSS_HOLD_LOOPS equ 6
+NORMAL_LIMIT equ 4
+SHIP_LIMIT equ 1
+NORMAL_INTERVAL equ 80
+SHIP_INTERVAL equ 240
+PLAYER_STEP equ 2
+BOSS_HP equ 1
+SCREEN_WIDTH equ 512
+SCREEN_HEIGHT equ 512
+VRAM_BASE equ $c00000
+VRAM_PAGE_1 equ $c80000
+PAGE_OBJECTS equ $b3000
+DRAW_DIRTY equ $b3200
+TILE_DIRTY equ $ee000
+OBJS equ $ef000
+HP equ $f0040
+KEYS equ $f0020
+TICK equ $f0004
+FLIPS equ $f0008
+SRCFRAME equ $f0010
+PART equ $f000c
+HITS equ $f0030
+SHOTS equ $ef300
+ROW_BOUNDS equ $b4000
+CACHE_TAGS equ $efc00
+IMAGE_GENERATIONS equ $efc40
+IMAGE_BOUNDS equ $efc60
+SHOT_SNAPS equ $efe00
+TILE_IDS equ $ed800
+STATUS_VISIBLE_FACES equ $f00c0
+STATUS_SPANS equ $f00c4
+STATUS_PIXELS equ $f00c8
+
+[entry
+  move.w #$2700,sr
+  clr.w $e82600.l
+  move.w #$0115,$e80028.l
+  move.w #1,$e82400.l
+  move.w #$00e4,$e82500.l
+  clr.l $e80018.l
+  clr.l $e8001c.l
+  lea rich_palette(pc),a0
+  move.l #$e82000,a1
+  move.w #255,d0.w
+.palette:
+  move.w (a0)+,(a1)+
+  dbra d0.w,.palette
+  move.l #$ee000,a0
+  move.w #2047,d0.w
+.scratch:
+  clr.l (a0)+
+  dbra d0.w,.scratch
+  move.l #PAGE_OBJECTS,a0
+  move.w #2815,d0.w
+.metadata:
+  clr.l (a0)+
+  dbra d0.w,.metadata
+  move.l #TILE_IDS,a0
+  move.w #767,d0.w
+.tile_init:
+  move.w #-1,(a0)+
+  dbra d0.w,.tile_init
+  move.l #$f0000,a0
+  move.w #127,d0.w
+.status:
+  clr.l (a0)+
+  dbra d0.w,.status
+  move.l #$70000,a0
+  move.l #67583,d0.l
+.images:
+  clr.l (a0)+
+  subq.l #1,d0.l
+  bpl.w .images
+  move.l #$c00000,a0
+  move.l #$c80000,a1
+  move.l #131071,d0.l
+.screens:
+  clr.l (a0)+
+  clr.l (a1)+
+  subq.l #1,d0.l
+  bpl.w .screens
+  clr.w draw_page.l
+  clr.w PART.l
+  move.w #-1,background_index.l
+  move.w #-1,background_part.l
+  move.w #64,render_size.l
+  move.w #128,render_stride.l
+  move.w #32,local_center.l
+  move.w #-30,player_z.l
+  move.w #$a55a,$f0000.l
+.main:
+  bsr.w service
+  bsr.w sequence_service
+  bsr.w background_service
+  bsr.w object_snapshot
+  // Reuse complete images while a bounded number of pose jobs are refreshed.
+  bsr.w pose_jobs
+  bsr.w object_snapshot
+  bsr.w sync_object_damage
+  bsr.w begin_damage_page
+  bsr.w restore_damage
+  // A large background transfer must not leave the craft at a pre-job position.
+  bsr.w late_player_snapshot
+  bsr.w sync_object_damage
+  bsr.w restore_damage
+  bsr.w order_objects
+  bsr.w draw_objects
+  bsr.w draw_shots
+.blank:
+  bsr.w service
+  btst #4,$e88001.l
+  bne.w .blank
+  moveq #1,d0.l
+  tst.w draw_page.l
+  beq.s .page0
+  moveq #2,d0.l
+.page0:
+  move.w d0.w,$e82600.l
+  move.w background_index.l,$f0012.l
+  move.w PART.l,$f0014.l
+  move.w source_pose.l,$f0016.l
+  move.w boss_angle.l,$f00d0.l
+  move.w principal_y.l,$f00d2.l
+  move.w snapshot_player_x.l,$f0070.l
+  move.w snapshot_player_z.l,$f0072.l
+  move.l OBJS.l,$f0074.l
+  move.l TICK.l,$f0078.l
+  move.w scheduled_keys.l,last_published_keys.l
+  eori.w #1,draw_page.l
+  addq.l #1,FLIPS.l
+  bra.w .main
+]/
+
+// Finite polling preserves caller registers AND condition codes.
+[service
+  move.w sr,-(sp)
+  move.l d0.l,-(sp)
+  moveq #0,d0.l
+  move.b $e88001.l,d0.b
+  andi.w #16,d0.w
+  cmp.w last_vdisp.l,d0.w
+  beq.w .quiet
+  move.w d0.w,last_vdisp.l
+  tst.w d0.w
+  bne.w .quiet
+  movem.l d1-d7/a0-a6,-(sp)
+  addq.l #1,TICK.l
+  addq.w #1,part_tick.l
+  // Keep the continuous normal-actor phase below the signed-word boundary.
+  // Subtracting the common period preserves every staggered actor remainder.
+  cmpi.w #3,PART.l
+  bge.s .actor_clock_done
+  cmpi.w #2,PART.l
+  beq.s .ship_actor_clock
+  cmpi.w #NORMAL_INTERVAL*NORMAL_LIMIT+NORMAL_INTERVAL*(NORMAL_LIMIT-1),part_tick.l
+  blt.s .actor_clock_done
+  subi.w #NORMAL_INTERVAL*NORMAL_LIMIT,part_tick.l
+  bra.s .actor_clock_done
+.ship_actor_clock:
+  cmpi.w #SHIP_INTERVAL*SHIP_LIMIT,part_tick.l
+  blt.s .actor_clock_done
+  subi.w #SHIP_INTERVAL*SHIP_LIMIT,part_tick.l
+.actor_clock_done:
+  tst.w hit_flash.l
+  beq.s .clock
+  subq.w #1,hit_flash.l
+.clock:
+  addi.l #14181,source_fraction.l
+  cmpi.l #65536,source_fraction.l
+  blt.s .input
+  subi.l #65536,source_fraction.l
+  addq.w #1,SRCFRAME.l
+.input:
+  move.w KEYS.l,d0.w
+  btst #5,d0.l
+  beq.s .playlist
+  move.w #1,next_requested.l
+.playlist:
+  btst #6,d0.l
+  beq.s .remember
+  btst #6,last_keys+1.l
+  bne.s .remember
+  tst.w PART.l
+  bne.s .remember
+  eori.w #1,selected_playlist.l
+  clr.w playlist_index.l
+.remember:
+  move.w d0.w,last_keys.l
+  move.w next_requested.l,$f0054.l
+  move.w selected_playlist.l,$f0056.l
+  btst #0,d0.l
+  beq.s .right
+  subi.w #PLAYER_STEP,player_x.l
+.right:
+  btst #1,d0.l
+  beq.s .up
+  addi.w #PLAYER_STEP,player_x.l
+.up:
+  btst #2,d0.l
+  beq.s .down
+  addi.w #PLAYER_STEP,player_z.l
+.down:
+  btst #3,d0.l
+  beq.s .clamp
+  subi.w #PLAYER_STEP,player_z.l
+.clamp:
+  cmpi.w #-180,player_x.l
+  bge.s .xhigh
+  move.w #-180,player_x.l
+.xhigh:
+  cmpi.w #180,player_x.l
+  ble.s .zlow
+  move.w #180,player_x.l
+.zlow:
+  cmpi.w #-70,player_z.l
+  bge.s .zhigh
+  move.w #-70,player_z.l
+.zhigh:
+  cmpi.w #120,player_z.l
+  ble.s .move_shots
+  move.w #120,player_z.l
+.move_shots:
+  bsr.w clamp_player_viewport
+  move.l #SHOTS,a0
+  moveq #7,d7.l
+.shot:
+  tst.w 4(a0)
+  beq.s .next
+  addq.w #8,2(a0)
+  subq.w #1,4(a0)
+.next:
+  addq.l #6,a0
+  dbra d7.w,.shot
+  tst.w fire_cooldown.l
+  beq.s .fire
+  subq.w #1,fire_cooldown.l
+.fire:
+  btst #4,d0.l
+  beq.s .publish
+  tst.w fire_cooldown.l
+  bne.s .publish
+  move.l #SHOTS,a0
+  moveq #7,d7.l
+.find:
+  tst.w 4(a0)
+  beq.s .spawn
+  addq.l #6,a0
+  dbra d7.w,.find
+  bra.s .publish
+.spawn:
+  move.w player_x.l,(a0)
+  move.w player_z.l,2(a0)
+  move.w #90,4(a0)
+  move.w #7,fire_cooldown.l
+  addq.l #1,$f0024.l
+.publish:
+  move.w player_x.l,$f0018.l
+  move.w player_z.l,$f001a.l
+  move.w d0.w,$f001c.l
+.done:
+  movem.l (sp)+,d1-d7/a0-a6
+.quiet:
+  move.l (sp)+,d0.l
+  move.w (sp)+,sr
+]
+
+[sequence_service
+  move.w PART.l,d0.w
+  mulu.w #6,d0.l
+  lea part_table(pc),a0
+  move.w 4(a0,d0.w),d1.w
+  cmpi.w #4,PART.l
+  bne.s .duration
+  tst.w defeat_pending.l
+  bne.w .done
+  mulu.w #BOSS_HOLD_LOOPS,d1.l
+.duration:
+  cmp.w SRCFRAME.l,d1.w
+  bgt.w .done
+  tst.w PART.l
+  bne.s .advance
+  tst.w next_requested.l
+  bne.s .advance
+  sub.w d1.w,SRCFRAME.l
+  move.w #-1,background_index.l
+  bra.w .done
+.advance:
+  clr.w next_requested.l
+  sub.w d1.w,SRCFRAME.l
+  addq.w #1,playlist_index.l
+  lea playlist0(pc),a0
+  tst.w selected_playlist.l
+  beq.s .selected
+  lea playlist1(pc),a0
+.selected:
+  move.w playlist_index.l,d0.w
+  add.w d0.w,d0.w
+  move.w 0(a0,d0.w),d0.w
+  bpl.s .new
+  clr.w playlist_index.l
+  move.w (a0),d0.w
+.new:
+  move.w d0.w,PART.l
+  clr.w part_tick.l
+  clr.w background_part.l
+  move.w #-1,background_index.l
+  move.w #-1,background_part.l
+  move.l #SHOTS,a0
+  moveq #11,d0.l
+.clear_shots:
+  clr.l (a0)+
+  dbra d0.w,.clear_shots
+  cmpi.w #3,PART.l
+  bne.s .done
+  addq.w #1,$f0050.l
+  clr.w defeat_pending.l
+  clr.w hold_loops.l
+  move.l #HP,a0
+  moveq #5,d0.l
+.hp:
+  move.w #BOSS_HP,(a0)+
+  dbra d0.w,.hp
+.done:
+]
+
+[background_service
+  move.w PART.l,d0.w
+  mulu.w #6,d0.l
+  lea part_table(pc),a0
+  moveq #0,d1.l
+  move.w SRCFRAME.l,d1.w
+  cmpi.w #4,PART.l
+  bne.s .frame
+  divu.w #96,d1.l
+  move.w d1.w,hold_loops.l
+  swap d1.l
+.frame:
+  andi.l #65535,d1.l
+  divu.w #SAMPLE_STRIDE,d1.l
+  cmp.w background_index.l,d1.w
+  bne.s .decode
+  move.w PART.l,d2.w
+  cmp.w background_part.l,d2.w
+  bne.s .decode
+  move.w hold_loops.l,d2.w
+  cmp.w published_hold_loop.l,d2.w
+  beq.w .done
+.decode:
+  // A complete independent map selects immutable tiles; no delta replay.
+  move.w d1.w,background_index.l
+  move.w hold_loops.l,published_hold_loop.l
+  move.w PART.l,background_part.l
+  add.w (a0,d0.w),d1.w
+  mulu.w #16,d1.l
+  lea frame_table(pc),a6
+  adda.l d1.l,a6
+  move.l (a6)+,a5
+  move.w (a6)+,d7.w
+  move.w (a6)+,source_pose.l
+  move.w (a6)+,boss_x.l
+  move.w (a6)+,boss_z.l
+  move.w (a6)+,principal_y.l
+  move.w (a6)+,boss_angle.l
+  cmpi.w #4,PART.l
+  blt.s .tokens
+  move.w hold_loops.l,d0.w
+  addq.w #1,d0.w
+  mulu.w #256,d0.l
+  divu.w #6,d0.l
+  add.w d0.w,boss_angle.l
+.tokens:
+  move.l #TILE_IDS,a6
+  moveq #0,d6.l
+  subq.w #1,d7.w
+  bmi.w .done
+.token:
+  move.w (a5)+,d5.w
+  tst.w d5.w
+  bmi.s .repeat_token
+  move.w d5.w,d4.w
+  moveq #0,d5.l
+  bra.s .repeat
+.repeat_token:
+  andi.w #$7fff,d5.w
+  move.w (a5)+,d4.w
+  subq.w #1,d5.w
+.repeat:
+  move.w d6.w,d0.w
+  andi.w #3,d0.w
+  bne.s .compare
+  bsr.w service
+.compare:
+  move.w (a6),d3.w
+  cmp.w d3.w,d4.w
+  beq.s .same_tile
+  move.w d4.w,(a6)
+  move.w d6.w,d0.w
+  bsr.w render_background_tile
+  addq.l #1,$f0060.l
+.same_tile:
+  addq.l #2,a6
+  addq.w #1,d6.w
+  dbra d5.w,.repeat
+  dbra d7.w,.token
+.done:
+]
+
+// d0=tile index, d4=new ID, d3=old ID. Skip identical pixel-pairs inside a tile.
+[render_background_tile
+  movem.l d0-d7/a0-a6,-(sp)
+  move.w d4.w,d7.w
+  moveq #0,d5.l
+  tst.w d3.w
+  bpl.s .old
+  moveq #1,d5.l
+  clr.w d3.w
+.old:
+  moveq #0,d2.l
+  move.w d3.w,d2.w
+  lsl.l #5,d2.l
+  move.l #$10000,a2
+  adda.l d2.l,a2
+  move.w d0.w,d1.w
+  lsr.w #5,d1.w
+  lsl.w #4,d1.w
+  addi.w #64,d1.w
+  andi.w #31,d0.w
+  lsl.w #4,d0.w
+  moveq #0,d2.l
+  move.w d0.w,d2.w
+  move.l d2.l,a4
+  move.w d1.w,d4.w
+  subi.w #64,d1.w
+  moveq #0,d2.l
+  move.w d1.w,d2.w
+  lsl.l #8,d2.l
+  lsl.l #2,d2.l
+  move.l #BG,a0
+  adda.l d2.l,a0
+  add.w d0.w,d0.w
+  adda.w d0.w,a0
+  lea 1024(a0),a1
+  moveq #0,d2.l
+  move.w d7.w,d2.w
+  lsl.l #5,d2.l
+  move.l #$10000,a3
+  adda.l d2.l,a3
+  moveq #7,d7.l
+.row:
+  clr.w -(sp)
+  moveq #3,d6.l
+.pair:
+  moveq #0,d0.l
+  move.b (a3)+,d0.b
+  move.b (a2)+,d2.b
+  tst.w d5.w
+  bne.s .changed
+  cmp.b d2.b,d0.b
+  beq.s .next_pair
+.changed:
+  move.l d0.l,d2.l
+  lsr.w #4,d2.w
+  move.w d2.w,d3.w
+  swap d2.l
+  move.w d3.w,d2.w
+  andi.w #15,d0.w
+  move.w d0.w,d3.w
+  swap d0.l
+  move.w d3.w,d0.w
+  move.l d2.l,(a0)
+  move.l d2.l,(a1)
+  move.l d0.l,4(a0)
+  move.l d0.l,4(a1)
+  ori.w #1,(sp)
+.next_pair:
+  adda.w #8,a0
+  adda.w #8,a1
+  dbra d6.w,.pair
+  move.w (sp)+,d0.w
+  beq.s .clean_row
+  move.l a4,d0.l
+  move.w d4.w,d1.w
+  move.w d0.w,d3.w
+  addi.w #16,d3.w
+  bsr.w mark_row
+  addq.w #1,d1.w
+  bsr.w mark_row
+.clean_row:
+  adda.w #2016,a0
+  adda.w #2016,a1
+  addq.w #2,d4.w
+  dbra d7.w,.row
+  movem.l (sp)+,d0-d7/a0-a6
+]
+
+// d0=left, d1=physical row, d3=exclusive right. Both physical page histories.
+[mark_row
+  movem.l d0-d3/a0-a1,-(sp)
+  tst.w d1.w
+  bmi.s .done
+  cmpi.w #512,d1.w
+  bge.s .done
+  tst.w d0.w
+  bge.s .left
+  clr.w d0.w
+.left:
+  cmpi.w #512,d3.w
+  ble.s .right
+  move.w #512,d3.w
+.right:
+  cmp.w d3.w,d0.w
+  bge.s .done
+  add.w d1.w,d1.w
+  move.l #$ee000,a0
+  adda.w d1.w,a0
+  move.l #$ee400,a1
+  adda.w d1.w,a1
+  cmp.w (a0),d0.w
+  bge.s .r0
+  move.w d0.w,(a0)
+.r0:
+  cmp.w (a1),d3.w
+  ble.s .l1
+  move.w d3.w,(a1)
+.l1:
+  cmp.w 2048(a0),d0.w
+  bge.s .r1
+  move.w d0.w,2048(a0)
+.r1:
+  cmp.w 2048(a1),d3.w
+  ble.s .done
+  move.w d3.w,2048(a1)
+.done:
+  movem.l (sp)+,d0-d3/a0-a1
+]
+
+[mark_object
+  movem.l d0-d7/a0-a6,-(sp)
+  tst.w 10(a6)
+  beq.w .done
+  subi.w #32,d0.w
+  subi.w #32,d1.w
+  move.w d0.w,d6.w
+  move.w d7.w,d0.w
+  mulu.w #256,d0.l
+  move.l #ROW_BOUNDS,a2
+  adda.l d0.l,a2
+  lea 128(a2),a3
+  moveq #63,d7.l
+.row:
+  move.w (a2)+,d0.w
+  move.w (a3)+,d3.w
+  cmp.w d3.w,d0.w
+  bge.s .next
+  add.w d6.w,d0.w
+  add.w d6.w,d3.w
+  bsr.w mark_row
+.next:
+  addq.w #1,d1.w
+  dbra d7.w,.row
+.done:
+  movem.l (sp)+,d0-d7/a0-a6
+]
+
+// World point d0=X, d1=Y, d2=Z; returns square512 pixel center and camera depth.
+[project
+  movem.l d3-d6,-(sp)
+  subi.w #120,d1.w
+  addi.w #140,d2.w
+  move.w d1.w,d3.w
+  muls.w #12551,d3.l
+  move.w d2.w,d4.w
+  muls.w #10531,d4.l
+  add.l d4.l,d3.l
+  asr.l #7,d3.l
+  asr.l #7,d3.l
+  move.w d1.w,d4.w
+  muls.w #-10531,d4.l
+  muls.w #12551,d2.l
+  add.l d4.l,d2.l
+  asr.l #7,d2.l
+  asr.l #7,d2.l
+  cmpi.w #64,d2.w
+  blt.s .hidden
+  muls.w #310,d0.l
+  divs.w d2.w,d0.l
+  addi.w #256,d0.w
+  muls.w #310,d3.l
+  divs.w d2.w,d3.l
+  move.w principal_y.l,d1.w
+  sub.w d3.w,d1.w
+  bra.s .done
+.hidden:
+  move.w #-2000,d0.w
+  move.w #-2000,d1.w
+.done:
+  movem.l (sp)+,d3-d6
+]
+
+[object_snapshot
+  move.l #OBJS,a6
+  moveq #0,d7.l
+.object:
+  move.w (a6),d0.w
+  move.w 2(a6),d1.w
+  bsr.w mark_object
+  moveq #0,d1.l
+  tst.w d7.w
+  bne.s .other
+  move.w player_x.l,d0.w
+  move.w player_z.l,d2.w
+  moveq #0,d6.l
+  moveq #0,d5.l
+  bra.w .place
+.other:
+  cmpi.w #3,PART.l
+  bge.w .boss
+  cmpi.w #NORMAL_LIMIT,d7.w
+  bgt.w .inactive
+  cmpi.w #2,PART.l
+  bne.s .normal
+  cmpi.w #SHIP_LIMIT,d7.w
+  bgt.w .inactive
+.normal:
+  move.w #NORMAL_INTERVAL,d4.w
+  move.w #NORMAL_INTERVAL*NORMAL_LIMIT,d3.w
+  cmpi.w #2,PART.l
+  bne.s .spawn_profile
+  move.w #SHIP_INTERVAL,d4.w
+  move.w #SHIP_INTERVAL*SHIP_LIMIT,d3.w
+.spawn_profile:
+  move.w d7.w,d0.w
+  subq.w #1,d0.w
+  mulu.w d4.w,d0.l
+  moveq #0,d2.l
+  move.w part_tick.l,d2.w
+  sub.w d0.w,d2.w
+  bmi.w .inactive
+  divu.w d3.w,d2.l
+  swap d2.l
+  andi.l #65535,d2.l
+  mulu.w #2,d2.l
+  neg.w d2.w
+  addi.w #500,d2.w
+  move.w d7.w,d0.w
+  mulu.w #70,d0.l
+  subi.w #175,d0.w
+  moveq #1,d6.l
+  move.l TICK.l,d5.l
+  lsr.w #2,d5.w
+  bra.s .place
+.boss:
+  move.w d7.w,d3.w
+  subq.w #1,d3.w
+  add.w d3.w,d3.w
+  move.l #HP,a0
+  tst.w 0(a0,d3.w)
+  beq.w .inactive
+  move.w d7.w,d5.w
+  subq.w #1,d5.w
+  mulu.w #256,d5.l
+  divu.w #6,d5.l
+  sub.w boss_angle.l,d5.w
+  andi.w #255,d5.w
+  move.w d5.w,d3.w
+  add.w d3.w,d3.w
+  lea sine_table(pc),a0
+  move.w 0(a0,d3.w),d2.w
+  muls.w #166,d2.l
+  asr.l #7,d2.l
+  asr.l #7,d2.l
+  add.w boss_z.l,d2.w
+  addi.w #128,d3.w
+  andi.w #511,d3.w
+  move.w 0(a0,d3.w),d0.w
+  muls.w #166,d0.l
+  asr.l #7,d0.l
+  asr.l #7,d0.l
+  add.w boss_x.l,d0.w
+  moveq #18,d1.l
+  moveq #2,d6.l
+.place:
+  bsr.w project
+  move.w d0.w,(a6)
+  move.w d1.w,2(a6)
+  move.w d2.w,4(a6)
+  cmp.w 6(a6),d6.w
+  beq.s .same_type
+  clr.w 10(a6)
+.same_type:
+  move.w d6.w,6(a6)
+  move.w d5.w,8(a6)
+  bsr.w mark_object
+  bra.s .next
+.inactive:
+  move.w #-2000,(a6)
+  move.w #-2000,2(a6)
+  move.w #-1,6(a6)
+  clr.w 10(a6)
+.next:
+  adda.w #16,a6
+  addq.w #1,d7.w
+  cmpi.w #7,d7.w
+  blt.w .object
+]
+
+[render_one
+  moveq #6,d7.l
+.find_changed:
+  addq.w #1,render_slot.l
+  cmpi.w #7,render_slot.l
+  blt.s .slot
+  clr.w render_slot.l
+.slot:
+  move.w render_slot.l,d0.w
+  mulu.w #16,d0.l
+  move.l #OBJS,a6
+  adda.l d0.l,a6
+  move.w 6(a6),d0.w
+  bmi.w .skip_slot
+  move.w render_slot.l,d1.w
+  mulu.w #8,d1.l
+  move.l #CACHE_TAGS,a2
+  adda.l d1.l,a2
+  move.w (a6),d1.w
+  subi.w #256,d1.w
+  move.w 2(a6),d2.w
+  sub.w principal_y.l,d2.w
+  tst.w 10(a6)
+  beq.s .changed
+  move.w 4(a6),d3.w
+  cmp.w (a2),d3.w
+  bne.s .changed
+  move.w 8(a6),d3.w
+  cmp.w 2(a2),d3.w
+  bne.s .changed
+  cmp.w 4(a2),d1.w
+  bne.s .changed
+  cmp.w 6(a2),d2.w
+  bne.s .changed
+  bra.w .skip_slot
+.changed:
+  move.w 4(a6),(a2)
+  move.w 8(a6),2(a2)
+  move.w d1.w,4(a2)
+  move.w d2.w,6(a2)
+  move.w 4(a6),pose_depth.l
+  move.w (a6),d1.w
+  subi.w #256,d1.w
+  move.w d1.w,pose_view_x.l
+  move.w 2(a6),d1.w
+  sub.w principal_y.l,d1.w
+  move.w d1.w,pose_view_y.l
+  move.w 8(a6),current_angle.l
+  mulu.w #16,d0.l
+  lea model_descriptors(pc),a0
+  adda.w d0.w,a0
+  move.l (a0)+,render_model.l
+  move.l (a0)+,render_faces.l
+  move.l (a0)+,a1
+  move.w (a0)+,render_vertex_count.l
+  move.w (a0),render_face_count.l
+  move.w current_angle.l,d0.w
+  andi.w #255,d0.w
+  mulu.w render_face_count.l,d0.l
+  adda.l d0.l,a1
+  move.l render_faces.l,a0
+  move.w render_face_count.l,d0.w
+  subq.w #1,d0.w
+.shades:
+  clr.w 6(a0)
+  move.b (a1)+,7(a0)
+  addq.l #8,a0
+  dbra d0.w,.shades
+  move.w render_slot.l,d0.w
+  mulu.w #8192,d0.l
+  move.l #$70000,a0
+  adda.l d0.l,a0
+  move.l a0,draw_vram_base.l
+  move.w #2047,d0.w
+.clear:
+  clr.l (a0)+
+  move.w d0.w,d1.w
+  andi.w #127,d1.w
+  bne.s .clearing
+  bsr.w service
+.clearing:
+  dbra d0.w,.clear
+  move.w render_slot.l,d0.w
+  mulu.w #256,d0.l
+  move.l #ROW_BOUNDS,a0
+  adda.l d0.l,a0
+  move.l a0,dirty_left_pointer.l
+  lea 128(a0),a1
+  move.l a1,dirty_right_pointer.l
+  moveq #63,d0.l
+.bounds:
+  move.w #64,(a0)+
+  clr.w (a1)+
+  dbra d0.w,.bounds
+  clr.w pose_invalid.l
+  bsr.w transform_vertices
+  bsr.w build_face_order
+  bsr.w sort_face_order
+  bsr.w draw_faces
+  move.w render_slot.l,d7.w
+  move.w d7.w,d0.w
+  mulu.w #16,d0.l
+  move.l #OBJS,a6
+  adda.l d0.l,a6
+  move.w #1,10(a6)
+  move.w (a6),d0.w
+  move.w 2(a6),d1.w
+  bsr.w mark_object
+  addq.l #1,$f0028.l
+  bra.s .done
+.skip_slot:
+  dbra d7.w,.find_changed
+.done:
+]
+
+[restore_damage
+  move.l #$c00000,composite_page.l
+  move.l #$ee000,a5
+  tst.w draw_page.l
+  beq.s .page
+  move.l #$c80000,composite_page.l
+  adda.w #2048,a5
+.page:
+  lea 1024(a5),a6
+  moveq #0,d7.l
+.row:
+  bsr.w service
+  moveq #0,d0.l
+  move.w (a5),d0.w
+  move.w (a6),d1.w
+  move.w #512,(a5)+
+  clr.w (a6)+
+  sub.w d0.w,d1.w
+  ble.w .next
+  move.w d7.w,d2.w
+  subi.w #64,d2.w
+  bmi.s .next
+  cmpi.w #384,d2.w
+  bge.s .next
+  mulu.w #1024,d2.l
+  move.l #BG,a0
+  adda.l d2.l,a0
+  move.w d7.w,d2.w
+  mulu.w #1024,d2.l
+  move.l composite_page.l,a1
+  adda.l d2.l,a1
+  add.w d0.w,d0.w
+  adda.w d0.w,a0
+  adda.w d0.w,a1
+  btst #0,d1.l
+  beq.s .pairs
+  move.w (a0)+,(a1)+
+.pairs:
+  lsr.w #1,d1.w
+  subq.w #1,d1.w
+  bmi.s .next
+.copy:
+  move.l (a0)+,(a1)+
+  dbra d1.w,.copy
+.next:
+  addq.w #1,d7.w
+  cmpi.w #512,d7.w
+  blt.w .row
+]
+
+[order_objects
+  moveq #5,d7.l
+.pass:
+  lea object_order(pc),a0
+  moveq #5,d6.l
+.pair:
+  move.w (a0),d0.w
+  mulu.w #16,d0.l
+  move.w 2(a0),d1.w
+  mulu.w #16,d1.l
+  move.l #OBJS,a1
+  move.w 4(a1,d0.w),d2.w
+  cmp.w 4(a1,d1.w),d2.w
+  bge.s .ordered
+  move.w (a0),d0.w
+  move.w 2(a0),(a0)
+  move.w d0.w,2(a0)
+.ordered:
+  addq.l #2,a0
+  dbra d6.w,.pair
+  dbra d7.w,.pass
+]
+
+[draw_objects
+  moveq #0,d7.l
+.object:
+  move.w d7.w,d0.w
+  add.w d0.w,d0.w
+  lea object_order(pc),a0
+  move.w 0(a0,d0.w),d0.w
+  move.w d0.w,drawing_slot.l
+  mulu.w #16,d0.l
+  move.l #OBJS,a6
+  adda.l d0.l,a6
+  tst.w 6(a6)
+  bmi.w .next_object
+  tst.w 10(a6)
+  beq.w .next_object
+  move.w drawing_slot.l,d0.w
+  mulu.w #8192,d0.l
+  move.l #$70000,a5
+  adda.l d0.l,a5
+  move.w drawing_slot.l,d0.w
+  mulu.w #256,d0.l
+  move.l #ROW_BOUNDS,a3
+  adda.l d0.l,a3
+  lea 128(a3),a4
+  move.w 2(a6),d6.w
+  subi.w #32,d6.w
+  moveq #63,d5.l
+.row:
+  bsr.w service
+  move.w (a3)+,d1.w
+  move.w (a4)+,d2.w
+  cmpi.w #64,d6.w
+  blt.w .next_row
+  cmpi.w #448,d6.w
+  bge.w .next_row
+  move.w (a6),d4.w
+  subi.w #32,d4.w
+  move.w d4.w,d0.w
+  neg.w d0.w
+  cmp.w d0.w,d1.w
+  bge.s .left
+  move.w d0.w,d1.w
+.left:
+  addi.w #512,d0.w
+  cmp.w d0.w,d2.w
+  ble.s .right
+  move.w d0.w,d2.w
+.right:
+  sub.w d1.w,d2.w
+  ble.s .next_row
+  add.w d1.w,d4.w
+  move.l a5,a2
+  add.w d1.w,d1.w
+  adda.w d1.w,a2
+  moveq #0,d0.l
+  move.w d6.w,d0.w
+  mulu.w #1024,d0.l
+  move.l composite_page.l,a0
+  adda.l d0.l,a0
+  move.w d4.w,d0.w
+  add.w d0.w,d0.w
+  adda.w d0.w,a0
+  move.w d2.w,d3.w
+  subq.w #1,d3.w
+.pixel:
+  move.w (a2)+,d0.w
+  btst #8,d0.l
+  beq.s .skip
+  move.w d0.w,(a0)
+.skip:
+  addq.l #2,a0
+  dbra d3.w,.pixel
+.next_row:
+  adda.w #128,a5
+  addq.w #1,d6.w
+  dbra d5.w,.row
+  // Native small engine glow. One tiny transient rect is restored per page.
+  move.w (a6),d0.w
+  move.w 2(a6),d1.w
+  addi.w #18,d1.w
+  move.w #90,d2.w
+  bsr.w spark
+.next_object:
+  addq.w #1,d7.w
+  cmpi.w #7,d7.w
+  blt.w .object
+]
+
+// Clipped 3x3 plasma pixel; damage history includes previous and new locations.
+[spark
+  movem.l d0-d7/a0-a6,-(sp)
+  move.w d0.w,d3.w
+  addq.w #3,d3.w
+  moveq #2,d7.l
+.row:
+  bsr.w mark_row
+  cmpi.w #64,d1.w
+  blt.s .next
+  cmpi.w #448,d1.w
+  bge.s .next
+  tst.w d0.w
+  bmi.s .next
+  cmpi.w #510,d0.w
+  bge.s .next
+  move.w d1.w,d4.w
+  mulu.w #1024,d4.l
+  move.l composite_page.l,a0
+  adda.l d4.l,a0
+  move.w d0.w,d4.w
+  add.w d4.w,d4.w
+  adda.w d4.w,a0
+  move.w d2.w,(a0)+
+  move.w d2.w,(a0)+
+  move.w d2.w,(a0)
+.next:
+  addq.w #1,d1.w
+  dbra d7.w,.row
+  movem.l (sp)+,d0-d7/a0-a6
+]
+
+[draw_shots
+  move.l #SHOTS,a6
+  move.l #SHOT_SNAPS,a4
+  moveq #7,d7.l
+.shot:
+  clr.w 4(a4)
+  tst.w 4(a6)
+  beq.w .next
+  move.w (a6),d0.w
+  moveq #0,d1.l
+  move.w 2(a6),d2.w
+  bsr.w project
+  move.w d0.w,shot_screen_x.l
+  move.w d1.w,shot_screen_y.l
+  move.w d0.w,(a4)
+  move.w d1.w,2(a4)
+  move.w #1,4(a4)
+  move.w #88,d2.w
+  bsr.w spark
+  cmpi.w #4,PART.l
+  bne.w .next
+  cmpi.w #BOSS_HOLD_LOOPS*96,SRCFRAME.l
+  bge.w .next
+  tst.w defeat_pending.l
+  bne.w .next
+  move.l #OBJS+16,a0
+  move.l #HP,a1
+  moveq #5,d6.l
+.part:
+  tst.w (a1)
+  beq.s .next_part
+  move.w shot_screen_x.l,d0.w
+  sub.w (a0),d0.w
+  cmpi.w #-20,d0.w
+  blt.s .next_part
+  cmpi.w #20,d0.w
+  bgt.s .next_part
+  move.w shot_screen_y.l,d1.w
+  sub.w 2(a0),d1.w
+  cmpi.w #-20,d1.w
+  blt.s .next_part
+  cmpi.w #20,d1.w
+  bgt.s .next_part
+  clr.w (a1)
+  clr.w 4(a6)
+  addq.l #1,HITS.l
+  move.w #48,hit_flash.l
+  move.w (a0),d0.w
+  move.w 2(a0),d1.w
+  move.w d0.w,hit_x.l
+  move.w d1.w,hit_y.l
+  move.w #89,d2.w
+  bsr.w spark
+  bra.s .check_all
+.next_part:
+  adda.w #16,a0
+  addq.l #2,a1
+  dbra d6.w,.part
+  bra.s .next
+.check_all:
+  move.l #HP,a0
+  moveq #5,d6.l
+  clr.w d0.w
+.sum:
+  or.w (a0)+,d0.w
+  dbra d6.w,.sum
+  bne.s .next
+  move.w #1,defeat_pending.l
+  addq.w #1,$f0052.l
+.next:
+  addq.l #6,a6
+  addq.l #6,a4
+  dbra d7.w,.shot
+  bsr.w draw_hit_effect
+]
+
+// A local transient flash/debris fan. It does not decide score/next stage.
+[draw_hit_effect
+  move.w #-1,shown_effect_age.l
+  tst.w hit_flash.l
+  beq.w .done
+  move.w #48,d4.w
+  sub.w hit_flash.l,d4.w
+  lsr.w #1,d4.w
+  move.w d4.w,shown_effect_age.l
+  move.w hit_x.l,d0.w
+  move.w hit_y.l,d1.w
+  move.w #89,d2.w
+  bsr.w spark
+  moveq #5,d6.l
+.particle:
+  move.w d6.w,d3.w
+  mulu.w #42,d3.l
+  add.w d3.w,d3.w
+  lea sine_table(pc),a0
+  move.w 0(a0,d3.w),d0.w
+  muls.w d4.w,d0.l
+  asr.l #7,d0.l
+  asr.l #7,d0.l
+  add.w hit_x.l,d0.w
+  addi.w #128,d3.w
+  andi.w #511,d3.w
+  move.w 0(a0,d3.w),d1.w
+  muls.w d4.w,d1.l
+  asr.l #7,d1.l
+  asr.l #7,d1.l
+  add.w hit_y.l,d1.w
+  move.w #91,d2.w
+  bsr.w spark
+  dbra d6.w,.particle
+.done:
+]
+
+[rich_state
+last_vdisp:
+  defw 0
+source_fraction:
+  defl 0
+part_tick:
+  defw 0
+playlist_index:
+  defw 0
+selected_playlist:
+  defw 0
+next_requested:
+  defw 0
+last_keys:
+  defw 0
+background_index:
+  defw -1
+background_part:
+  defw -1
+published_hold_loop:
+  defw 0
+source_pose:
+  defw 0
+boss_x:
+  defw 70
+boss_z:
+  defw 30
+boss_angle:
+  defw 0
+hold_loops:
+  defw 0
+principal_y:
+  defw 256
+player_x:
+  defw 0
+player_z:
+  defw -30
+fire_cooldown:
+  defw 0
+render_slot:
+  defw -1
+composite_page:
+  defl $c00000
+drawing_slot:
+  defw 0
+object_order:
+  defw 0,1,2,3,4,5,6
+render_model:
+  defl 0
+render_faces:
+  defl 0
+render_vertex_count:
+  defw 0
+render_face_count:
+  defw 0
+render_size:
+  defw 64
+render_stride:
+  defw 128
+local_center:
+  defw 32
+pose_depth:
+  defw 256
+pose_view_x:
+  defw 0
+pose_view_y:
+  defw 0
+pose_rotated_z:
+  defw 0
+pose_invalid:
+  defw 0
+shot_screen_x:
+  defw 0
+shot_screen_y:
+  defw 0
+hit_flash:
+  defw 0
+hit_x:
+  defw 0
+hit_y:
+  defw 0
+shown_effect_age:
+  defw -1
+defeat_pending:
+  defw 0
+]
+include "RENDERER"
+include "ASSETS"

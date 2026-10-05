@@ -1,0 +1,29 @@
+{
+  "schema": "axxphorg-x68000-bounded-baseline.v1",
+  "dateJst": "2026-10-05",
+  "binarySha256": "e65969fba20898c8de844b04210672ec07bbb5ec5afb658552941f9447adb746",
+  "guestBytes": 33332,
+  "backgroundBytes": 295196,
+  "hostVersion": "0.4.0-preview.31",
+  "hostExeSha256": "52614656c9a0e4953f8f30e1cbcceee59e381632bb1a1433e92726d5e507769c",
+  "handle": "axx-r20261005-x68000",
+  "instanceId": "6fbf95f4bcc241aba094e4e49c861f51",
+  "classification": "Bounded API run on the owned shared-host instance, 10MHz nominal guest conversion; not hardware or wall-clock FPS",
+  "sample": {
+    "beforePages": 1,
+    "afterPages": 29,
+    "beforeLogicalTick": 42,
+    "afterLogicalTick": 603,
+    "executedCycles": 109992757,
+    "nominalGuestSeconds": 10.9992757,
+    "wallSeconds": 4.479056900017895,
+    "pagesPerNominalGuestSecond": 2.5456221616479713,
+    "newPoses": 20
+  },
+  "knownDefects": [
+    "Full 64x64 transparent scan for every active object on every page",
+    "Native renderer dirty span pointers not initialized",
+    "Background delta decoding skipped intervening sample frames",
+    "Normal keyboard adapter unconnected; mailbox only"
+  ]
+}

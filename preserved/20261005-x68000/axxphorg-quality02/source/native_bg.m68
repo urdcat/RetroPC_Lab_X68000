@@ -1,0 +1,93 @@
+// Offline background-native512 color runs. Runtime foreground remains CPU 3D.
+[copy_background_tile
+  movem.l d0-d7/a0-a4,-(sp)
+  move.w d0.w,d2.w
+  lsr.w #5,d2.w
+  lsl.w #4,d2.w
+  addi.w #64,d2.w
+  mulu.w #1024,d2.l
+  andi.l #31,d0.l
+  lsl.w #5,d0.w
+  add.l d0.l,d2.l
+  move.l composite_page.l,a0
+  adda.l d2.l,a0
+  lsl.l #2,d1.l
+  move.l #$10000,a2
+  adda.l d1.l,a2
+  move.l (a2),a2
+  cmpi.b #$f0,(a2)
+  beq.w .solid_tile
+  lea background_run_lut(pc),a1
+  moveq #16,d7.l
+.group:
+  moveq #0,d0.l
+  move.b (a2)+,d0.b
+  move.w d0.w,d5.w
+  andi.w #15,d5.w
+  lsr.w #4,d0.w
+  move.w d0.w,d6.w
+  addq.w #1,d0.w
+  sub.w d0.w,d7.w
+  move.l a2,a3
+.row:
+  bsr.w service
+  move.l a3,a2
+  move.w d5.w,d4.w
+.run:
+  moveq #0,d0.l
+  move.b (a2)+,d0.b
+  lsl.w #3,d0.w
+  move.l 0(a1,d0.w),d1.l
+  move.l 4(a1,d0.w),a4
+  jmp (a4)
+.fill_even:
+  move.l d1.l,(a0)+
+  move.l d1.l,(a0)+
+  move.l d1.l,(a0)+
+  move.l d1.l,(a0)+
+  move.l d1.l,(a0)+
+  move.l d1.l,(a0)+
+  move.l d1.l,(a0)+
+  move.l d1.l,(a0)+
+  bra.s .run_done
+.fill_odd:
+  move.l d1.l,(a0)+
+  move.l d1.l,(a0)+
+  move.l d1.l,(a0)+
+  move.l d1.l,(a0)+
+  move.l d1.l,(a0)+
+  move.l d1.l,(a0)+
+  move.l d1.l,(a0)+
+  move.w d1.w,(a0)+
+.run_done:
+  dbra d4.w,.run
+  adda.w #992,a0
+  dbra d6.w,.row
+  tst.w d7.w
+  bgt.w .group
+.done:
+  movem.l (sp)+,d0-d7/a0-a4
+  bra.s .return
+.solid_tile:
+  moveq #0,d0.l
+  move.b 1(a2),d0.b
+  andi.w #15,d0.w
+  move.w d0.w,d1.w
+  swap d0.l
+  move.w d1.w,d0.w
+  moveq #15,d7.l
+.solid_row:
+  move.l d0.l,(a0)+
+  move.l d0.l,(a0)+
+  move.l d0.l,(a0)+
+  move.l d0.l,(a0)+
+  move.l d0.l,(a0)+
+  move.l d0.l,(a0)+
+  move.l d0.l,(a0)+
+  move.l d0.l,(a0)+
+  adda.w #992,a0
+  dbra d7.w,.solid_row
+  addq.l #1,$f0068.l
+  movem.l (sp)+,d0-d7/a0-a4
+.return:
+]

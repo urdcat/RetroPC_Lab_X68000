@@ -1,0 +1,3290 @@
+{
+  "schemaVersion": 1,
+  "reportId": "20261005-x68000-axxphorg-quality-02",
+  "event": "quality_repair_checkpoint",
+  "reportedAt": "2026-10-05T19:29:55.074000+09:00",
+  "supersedesReportId": null,
+  "targetId": "x68000-ram",
+  "displayName": "AxxPhorg X68000 rich / native512 fixed-camera quality checkpoint",
+  "familyId": "x68000",
+  "variantId": "base",
+  "libraryId": "axxphorg-rich",
+  "libraryVersion": "quality-02-native512-v0.5",
+  "modernRoute": {
+    "routeId": null,
+    "engineId": null,
+    "engineVersion": null,
+    "seriesId": null,
+    "gameId": null,
+    "relationship": null
+  },
+  "owner": {
+    "hostId": "local",
+    "threadId": "019f8c98-cf3b-7143-9b4b-5534fa200976",
+    "title": "X68000 D-side owner"
+  },
+  "source": {
+    "root": "D:\\work\\X68000で何か作ろう\\prototypes\\axxphorg-rich",
+    "entryPoints": [
+      "guest.m68",
+      "quality.m68",
+      "native_bg.m68",
+      "build.py",
+      "native_background.py",
+      "probe_native_background.py",
+      "runtime.py",
+      "controller.py",
+      "controller.html",
+      "settings.json",
+      "verify.py",
+      "profile_quality.py",
+      "profile_pose.py",
+      "compare_latency.py",
+      "capture_quality_ui.py",
+      "quality02_report.py",
+      "README.txt",
+      "RESUME.txt"
+    ],
+    "commit": "89253a831d2d5913679790d00fdbf7531d86ac37",
+    "dirty": true,
+    "fileHashes": [
+      {
+        "path": "D:\\work\\X68000で何か作ろう\\prototypes\\axxphorg-rich\\guest.m68",
+        "bytes": 22648,
+        "sha256": "ccd919612265d846940d469a5c6d5fb2204789d31c8f59e4c7a0764d3255a295"
+      },
+      {
+        "path": "D:\\work\\X68000で何か作ろう\\prototypes\\axxphorg-rich\\quality.m68",
+        "bytes": 16593,
+        "sha256": "e54ee804489f969413e00934a54b7e4949fb6e6289a7d0a4fac1d0707a810306"
+      },
+      {
+        "path": "D:\\work\\X68000で何か作ろう\\prototypes\\axxphorg-rich\\native_bg.m68",
+        "bytes": 1721,
+        "sha256": "7828b5bc7d35dd2474321371b6ba4e85542a91ff542222c4ee499acf53566849"
+      },
+      {
+        "path": "D:\\work\\X68000で何か作ろう\\prototypes\\axxphorg-rich\\build.py",
+        "bytes": 14393,
+        "sha256": "98c0985cb13a14d36040a19859e390ab266da827f199ebb6bd3be72e585e2f97"
+      },
+      {
+        "path": "D:\\work\\X68000で何か作ろう\\prototypes\\axxphorg-rich\\native_background.py",
+        "bytes": 3715,
+        "sha256": "43d6c960d09cde2051d84e1df3044eb8f56f7978b021633d9d92b56bcaeaa0ee"
+      },
+      {
+        "path": "D:\\work\\X68000で何か作ろう\\prototypes\\axxphorg-rich\\probe_native_background.py",
+        "bytes": 2617,
+        "sha256": "e81238a93bc5cc73c080f18cc89a42a06f90db5ba6025257f19f4deb9fa58004"
+      },
+      {
+        "path": "D:\\work\\X68000で何か作ろう\\prototypes\\axxphorg-rich\\runtime.py",
+        "bytes": 8953,
+        "sha256": "2da6ae86bd20f0599f3d90a1ae7207e23567e1a5c9493d9363448212510689bb"
+      },
+      {
+        "path": "D:\\work\\X68000で何か作ろう\\prototypes\\axxphorg-rich\\controller.py",
+        "bytes": 4856,
+        "sha256": "6648be1baa0b053d45f63b9b8d866b95e8e4b86469ca3af3d5ef93f4d86f5846"
+      },
+      {
+        "path": "D:\\work\\X68000で何か作ろう\\prototypes\\axxphorg-rich\\controller.html",
+        "bytes": 5066,
+        "sha256": "8c3868ee29a9cb9a4c62490d31b28ce3b076915ad924fc22bdbb494dbe01ab69"
+      },
+      {
+        "path": "D:\\work\\X68000で何か作ろう\\prototypes\\axxphorg-rich\\settings.json",
+        "bytes": 760,
+        "sha256": "b7421cb613f5f13c04960d332669e732c65cd39310af55275eb9a838a7b32c64"
+      },
+      {
+        "path": "D:\\work\\X68000で何か作ろう\\prototypes\\axxphorg-rich\\verify.py",
+        "bytes": 12617,
+        "sha256": "18471ec99987307781767d99902d483e1c194496bed5ffb7ce5ccb8cf03da55a"
+      },
+      {
+        "path": "D:\\work\\X68000で何か作ろう\\prototypes\\axxphorg-rich\\profile_quality.py",
+        "bytes": 2605,
+        "sha256": "3af339e7dceecd560c23191b7eb35d430344cb30baad1008fc756d76d91d5e5b"
+      },
+      {
+        "path": "D:\\work\\X68000で何か作ろう\\prototypes\\axxphorg-rich\\profile_pose.py",
+        "bytes": 1820,
+        "sha256": "32da5c13ff646da3087128db4de61bbfca942b487dacd0412ed67564f374e79c"
+      },
+      {
+        "path": "D:\\work\\X68000で何か作ろう\\prototypes\\axxphorg-rich\\compare_latency.py",
+        "bytes": 7684,
+        "sha256": "97b52c980d6e7f19d59ccbcef7a1881ef02e036c2691eda6387c4445de3282d7"
+      },
+      {
+        "path": "D:\\work\\X68000で何か作ろう\\prototypes\\axxphorg-rich\\capture_quality_ui.py",
+        "bytes": 2907,
+        "sha256": "87e1246b8addf1728113dff8f4fd844b86c3277a459e9701e902115b4bc0761f"
+      },
+      {
+        "path": "D:\\work\\X68000で何か作ろう\\prototypes\\axxphorg-rich\\quality02_report.py",
+        "bytes": 10960,
+        "sha256": "9938798d9809d52403214eaea07a51de3089f5ea0cac448b4f3972d6c013d719"
+      },
+      {
+        "path": "D:\\work\\X68000で何か作ろう\\prototypes\\axxphorg-rich\\README.txt",
+        "bytes": 3774,
+        "sha256": "267bada076b30f0b62503135d6cce8afafb7da0a33a5bde0327e67d6131cfa8f"
+      },
+      {
+        "path": "D:\\work\\X68000で何か作ろう\\prototypes\\axxphorg-rich\\RESUME.txt",
+        "bytes": 10197,
+        "sha256": "4ccef7447d3468c00e3f0b58414fdeb757b1d0edc971b2cca42561ddc71299b7"
+      }
+    ],
+    "provenanceNotes": "Separate owner prototype. Published frozen legacy renderer dependency plus pinned external common procedural art v0.5. Old games/demos and QUALITY-01 remain unchanged. No commercial ROM, extracted reference payload, credentials, or large movies published."
+  },
+  "status": "prototype_with_remaining_issues",
+  "capabilities": {
+    "runtimeTransform3d": true,
+    "runtimeProjection": true,
+    "filledTriangles": true,
+    "convexPolygonMaxVertices": null,
+    "nearPlaneClipping": false,
+    "viewportClipping": true,
+    "hiddenSurfaceMethod": "backface rejection and painter sorting in local images; far-to-near foreground objects; NO per-pixel background depth mask",
+    "numericFormatAndRange": "MC68000 signed integer / Q14 camera trig, truncating perspective division",
+    "renderModes": [
+      "512x512 256-color two-page GVRAM"
+    ]
+  },
+  "contract": {
+    "document": "D:\\work\\PolygonGames\\proposals\\20261005-axxphorg-six-part-background-v05\\README.md",
+    "entryPoints": [],
+    "inputLayout": "word 0xf0020 bits left/right/forward/backward/fire/next/playlist; owner software bridge only",
+    "registerClobbers": "worker functions share scratch; service preserves registers and CCR",
+    "stackBytes": null,
+    "scratchMemory": {
+      "code": [
+        4096,
+        65536
+      ],
+      "backgroundStreams": [
+        [
+          65536,
+          458752
+        ],
+        [
+          745472,
+          972800
+        ]
+      ],
+      "currentTileIds": [
+        972800,
+        974336
+      ],
+      "scratch": [
+        974848,
+        983040
+      ],
+      "statusAndInput": [
+        983040,
+        987136
+      ],
+      "stackTop": 1044480,
+      "ramBytes": 1048576,
+      "physicalGvramBytes": 524288,
+      "localImages": [
+        458752,
+        729088
+      ],
+      "pageObjectSnapshots": [
+        733184,
+        733520
+      ],
+      "drawDirtyTiles": [
+        733696,
+        734464
+      ],
+      "rowBounds": [
+        737280,
+        742656
+      ],
+      "pageDirtyTiles": [
+        974848,
+        976384
+      ],
+      "stagingImage": [
+        987136,
+        1019904
+      ],
+      "stagingRowBounds": [
+        1019904,
+        1020416
+      ]
+    },
+    "interruptAndReentry": "SR=0x2700; cooperative GPIP bit4 polling, not reentrant",
+    "errorBehavior": "shared identity mismatch stops; no private emulator fallback"
+  },
+  "resources": {
+    "cpuConfiguration": "MC68000 nominal 10MHz, shared Champon8 preview.31",
+    "ramBytes": 1048576,
+    "vramBytes": 524288,
+    "romBytes": 0,
+    "memoryMap": {
+      "code": [
+        4096,
+        65536
+      ],
+      "backgroundStreams": [
+        [
+          65536,
+          458752
+        ],
+        [
+          745472,
+          972800
+        ]
+      ],
+      "currentTileIds": [
+        972800,
+        974336
+      ],
+      "scratch": [
+        974848,
+        983040
+      ],
+      "statusAndInput": [
+        983040,
+        987136
+      ],
+      "stackTop": 1044480,
+      "ramBytes": 1048576,
+      "physicalGvramBytes": 524288,
+      "localImages": [
+        458752,
+        729088
+      ],
+      "pageObjectSnapshots": [
+        733184,
+        733520
+      ],
+      "drawDirtyTiles": [
+        733696,
+        734464
+      ],
+      "rowBounds": [
+        737280,
+        742656
+      ],
+      "pageDirtyTiles": [
+        974848,
+        976384
+      ],
+      "stagingImage": [
+        987136,
+        1019904
+      ],
+      "stagingRowBounds": [
+        1019904,
+        1020416
+      ]
+    },
+    "expansionRequired": false,
+    "dmaAndDisplayContention": "CPU GVRAM writes; no DMAC/sprite backend; timing uncalibrated",
+    "inputAudioBudget": "no game audio implementation"
+  },
+  "build": {
+    "workingDirectory": "D:\\work\\X68000で何か作ろう",
+    "command": "bundled Python -B prototypes/axxphorg-rich/build.py",
+    "toolVersions": [
+      {
+        "name": "m68kasm",
+        "version": "0.9.0-preview.1",
+        "sha256": "16ed0f24fa62f22fd65b9358c113cab2a9b30f406be0dd2025824b67857c26a4"
+      }
+    ],
+    "artifacts": [
+      {
+        "path": "D:\\work\\X68000で何か作ろう\\prototypes\\axxphorg-rich\\build\\guest.bin",
+        "bytes": 37926,
+        "sha256": "eca7e44515196a5a259ca7de020d818648b2003b4224391b99c959f867483c7b"
+      },
+      {
+        "path": "D:\\work\\X68000で何か作ろう\\prototypes\\axxphorg-rich\\build\\background.bin",
+        "bytes": 579194,
+        "sha256": "6dfea4e2db634888b818df509808c0938a84558544acae25a4b7b1e8463ec342"
+      },
+      {
+        "path": "D:\\work\\X68000で何か作ろう\\prototypes\\axxphorg-rich\\build\\guest.m68",
+        "bytes": 147846,
+        "sha256": "30c5b91323bb21a8e72af4cf72075d5f9cce7a508331c1def2b230ff1372e378"
+      },
+      {
+        "path": "D:\\work\\X68000で何か作ろう\\prototypes\\axxphorg-rich\\build\\build.json",
+        "bytes": 42183,
+        "sha256": "73a01d67bbccf62dd2f7291a2f6b749347dce615caa0f6fd42d881d8df56b04d"
+      }
+    ]
+  },
+  "evidence": {
+    "source": {
+      "status": "verified_in_stated_scope",
+      "references": [
+        "D:\\work\\X68000で何か作ろう\\prototypes\\axxphorg-rich\\guest.m68",
+        "D:\\work\\X68000で何か作ろう\\prototypes\\axxphorg-rich\\quality.m68",
+        "D:\\work\\X68000で何か作ろう\\prototypes\\axxphorg-rich\\native_bg.m68",
+        "D:\\work\\X68000で何か作ろう\\prototypes\\axxphorg-rich\\build.py",
+        "D:\\work\\X68000で何か作ろう\\prototypes\\axxphorg-rich\\native_background.py",
+        "D:\\work\\X68000で何か作ろう\\prototypes\\axxphorg-rich\\probe_native_background.py",
+        "D:\\work\\X68000で何か作ろう\\prototypes\\axxphorg-rich\\runtime.py",
+        "D:\\work\\X68000で何か作ろう\\prototypes\\axxphorg-rich\\controller.py",
+        "D:\\work\\X68000で何か作ろう\\prototypes\\axxphorg-rich\\controller.html",
+        "D:\\work\\X68000で何か作ろう\\prototypes\\axxphorg-rich\\settings.json",
+        "D:\\work\\X68000で何か作ろう\\prototypes\\axxphorg-rich\\verify.py",
+        "D:\\work\\X68000で何か作ろう\\prototypes\\axxphorg-rich\\profile_quality.py",
+        "D:\\work\\X68000で何か作ろう\\prototypes\\axxphorg-rich\\profile_pose.py",
+        "D:\\work\\X68000で何か作ろう\\prototypes\\axxphorg-rich\\compare_latency.py",
+        "D:\\work\\X68000で何か作ろう\\prototypes\\axxphorg-rich\\capture_quality_ui.py",
+        "D:\\work\\X68000で何か作ろう\\prototypes\\axxphorg-rich\\quality02_report.py",
+        "D:\\work\\X68000で何か作ろう\\prototypes\\axxphorg-rich\\README.txt",
+        "D:\\work\\X68000で何か作ろう\\prototypes\\axxphorg-rich\\RESUME.txt"
+      ],
+      "conditions": "Owned shared-host bounded execution; software mailbox input; not physical keys/hardware"
+    },
+    "build": {
+      "status": "verified_in_stated_scope",
+      "references": [
+        "D:\\work\\X68000で何か作ろう\\prototypes\\axxphorg-rich\\build\\build.json"
+      ],
+      "conditions": "Owned shared-host bounded execution; software mailbox input; not physical keys/hardware"
+    },
+    "emulator": {
+      "status": "verified_in_stated_scope",
+      "references": [
+        "D:\\work\\X68000で何か作ろう\\prototypes\\axxphorg-rich\\build\\verification-1791194791688474900\\result.json"
+      ],
+      "conditions": "Owned shared-host bounded execution; software mailbox input; not physical keys/hardware"
+    },
+    "visual": {
+      "status": "verified_in_stated_scope",
+      "references": [
+        "D:\\work\\X68000で何か作ろう\\prototypes\\axxphorg-rich\\build\\verification-1791194791688474900\\stars-start.png",
+        "D:\\work\\X68000で何か作ろう\\prototypes\\axxphorg-rich\\build\\verification-1791194791688474900\\input-right-forward.png",
+        "D:\\work\\X68000で何か作ろう\\prototypes\\axxphorg-rich\\build\\verification-1791194791688474900\\input-right-backward.png",
+        "D:\\work\\X68000で何か作ろう\\prototypes\\axxphorg-rich\\build\\verification-1791194791688474900\\input-left-backward.png",
+        "D:\\work\\X68000で何か作ろう\\prototypes\\axxphorg-rich\\build\\verification-1791194791688474900\\input-left-forward.png",
+        "D:\\work\\X68000で何か作ろう\\prototypes\\axxphorg-rich\\build\\verification-1791194791688474900\\stars-steady.png",
+        "D:\\work\\X68000で何か作ろう\\prototypes\\axxphorg-rich\\build\\verification-1791194791688474900\\battleship-near.png",
+        "D:\\work\\X68000で何か作ろう\\prototypes\\axxphorg-rich\\build\\verification-1791194791688474900\\boss-arrival.png",
+        "D:\\work\\X68000で何か作ろう\\prototypes\\axxphorg-rich\\build\\verification-1791194791688474900\\boss-hold.png",
+        "D:\\work\\X68000で何か作ろう\\prototypes\\axxphorg-rich\\build\\verification-1791194791688474900\\boss-departure.png",
+        "D:\\work\\X68000で何か作ろう\\prototypes\\axxphorg-rich\\build\\verification-1791194791688474900\\stars-return.png",
+        "D:\\work\\X68000で何か作ろう\\prototypes\\axxphorg-rich\\build\\verification-1791194791688474900\\asteroids.png"
+      ],
+      "conditions": "Owned shared-host bounded execution; software mailbox input; not physical keys/hardware"
+    },
+    "hardware": {
+      "status": "unverified",
+      "references": [],
+      "conditions": "RAM diagnostic only, no IPL/IOCS/Human68k .X acceptance"
+    }
+  },
+  "performance": {
+    "scope": "actual completed-page pipeline and displayed motion; not hardware FPS",
+    "scene": null,
+    "configuration": {
+      "model": "x68000",
+      "mode": "RAM",
+      "backgroundSourceStride": 4,
+      "nativeBackgroundPixels": [
+        512,
+        384
+      ]
+    },
+    "samples": [
+      {
+        "before": {
+          "ready": 42330,
+          "tick": 481,
+          "pages": 89,
+          "part": 0,
+          "sourceFrame": 8,
+          "backgroundIndex": 1,
+          "shownPart": 0,
+          "shownSourceFrame": 4,
+          "playerX": -142,
+          "playerZ": 120,
+          "keys": 0,
+          "shotsFired": 5,
+          "poses": 20,
+          "hits": 0,
+          "hp": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          "encounter": 0,
+          "defeatEvents": 0,
+          "visibleFaces": 17,
+          "spans": 0,
+          "pixels": 0,
+          "shownBossAngle": 2,
+          "shownPrincipalY": 256,
+          "tilesRestored": 8828,
+          "solidTilesRestored": 6424,
+          "solidRowsRestored": 0,
+          "shownPlayerWorldX": -142,
+          "shownPlayerWorldZ": 120,
+          "shownPlayerScreenX": 97,
+          "shownPlayerScreenY": 172,
+          "shownPageTick": 481,
+          "poseCompletedTicks": [
+            318,
+            356,
+            393,
+            430,
+            313,
+            0,
+            0
+          ]
+        },
+        "after": {
+          "ready": 42330,
+          "tick": 636,
+          "pages": 117,
+          "part": 0,
+          "sourceFrame": 41,
+          "backgroundIndex": 10,
+          "shownPart": 0,
+          "shownSourceFrame": 40,
+          "playerX": -142,
+          "playerZ": 120,
+          "keys": 0,
+          "shotsFired": 5,
+          "poses": 27,
+          "hits": 0,
+          "hp": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          "encounter": 0,
+          "defeatEvents": 0,
+          "visibleFaces": 18,
+          "spans": 0,
+          "pixels": 0,
+          "shownBossAngle": 18,
+          "shownPrincipalY": 256,
+          "tilesRestored": 11036,
+          "solidTilesRestored": 7846,
+          "solidRowsRestored": 0,
+          "shownPlayerWorldX": -142,
+          "shownPlayerWorldZ": 120,
+          "shownPlayerScreenX": 97,
+          "shownPlayerScreenY": 172,
+          "shownPageTick": 636,
+          "poseCompletedTicks": [
+            491,
+            632,
+            557,
+            582,
+            607,
+            0,
+            0
+          ]
+        },
+        "executedCycles": 28309936,
+        "nominalGuestSeconds": 2.8309936,
+        "wallSeconds": 2.0761394999863114,
+        "label": "stars steady, software input released",
+        "pageHz": 9.890520416577417
+      },
+      {
+        "before": {
+          "ready": 42330,
+          "tick": 1199,
+          "pages": 226,
+          "part": 2,
+          "sourceFrame": 67,
+          "backgroundIndex": 16,
+          "shownPart": 2,
+          "shownSourceFrame": 64,
+          "playerX": -142,
+          "playerZ": 120,
+          "keys": 0,
+          "shotsFired": 5,
+          "poses": 47,
+          "hits": 0,
+          "hp": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          "encounter": 0,
+          "defeatEvents": 0,
+          "visibleFaces": 14,
+          "spans": 0,
+          "pixels": 0,
+          "shownBossAngle": 28,
+          "shownPrincipalY": 256,
+          "tilesRestored": 19034,
+          "solidTilesRestored": 12016,
+          "solidRowsRestored": 0,
+          "shownPlayerWorldX": -142,
+          "shownPlayerWorldZ": 120,
+          "shownPlayerScreenX": 97,
+          "shownPlayerScreenY": 172,
+          "shownPageTick": 1199,
+          "poseCompletedTicks": [
+            491,
+            1157,
+            831,
+            853,
+            876,
+            0,
+            0
+          ]
+        },
+        "after": {
+          "ready": 42330,
+          "tick": 1323,
+          "pages": 236,
+          "part": 2,
+          "sourceFrame": 94,
+          "backgroundIndex": 22,
+          "shownPart": 2,
+          "shownSourceFrame": 88,
+          "playerX": -142,
+          "playerZ": 120,
+          "keys": 0,
+          "shotsFired": 5,
+          "poses": 49,
+          "hits": 0,
+          "hp": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          "encounter": 0,
+          "defeatEvents": 0,
+          "visibleFaces": 16,
+          "spans": 0,
+          "pixels": 0,
+          "shownBossAngle": 39,
+          "shownPrincipalY": 256,
+          "tilesRestored": 21407,
+          "solidTilesRestored": 12588,
+          "solidRowsRestored": 0,
+          "shownPlayerWorldX": -142,
+          "shownPlayerWorldZ": 120,
+          "shownPlayerScreenX": 97,
+          "shownPlayerScreenY": 172,
+          "shownPageTick": 1323,
+          "poseCompletedTicks": [
+            491,
+            1270,
+            831,
+            853,
+            876,
+            0,
+            0
+          ]
+        },
+        "executedCycles": 22359436,
+        "nominalGuestSeconds": 2.2359436,
+        "wallSeconds": 1.5803079000033904,
+        "label": "battleship near",
+        "pageHz": 4.472384723836504
+      },
+      {
+        "before": {
+          "ready": 42330,
+          "tick": 2734,
+          "pages": 409,
+          "part": 4,
+          "sourceFrame": 15,
+          "backgroundIndex": 3,
+          "shownPart": 4,
+          "shownSourceFrame": 12,
+          "playerX": -142,
+          "playerZ": 120,
+          "keys": 0,
+          "shotsFired": 5,
+          "poses": 86,
+          "hits": 0,
+          "hp": [
+            1,
+            1,
+            1,
+            1,
+            1,
+            1
+          ],
+          "encounter": 1,
+          "defeatEvents": 0,
+          "visibleFaces": 12,
+          "spans": 0,
+          "pixels": 0,
+          "shownBossAngle": 47,
+          "shownPrincipalY": 256,
+          "tilesRestored": 46861,
+          "solidTilesRestored": 20984,
+          "solidRowsRestored": 0,
+          "shownPlayerWorldX": -142,
+          "shownPlayerWorldZ": 120,
+          "shownPlayerScreenX": 97,
+          "shownPlayerScreenY": 172,
+          "shownPageTick": 2734,
+          "poseCompletedTicks": [
+            491,
+            2479,
+            2505,
+            2541,
+            2607,
+            2440,
+            2457
+          ]
+        },
+        "after": {
+          "ready": 42330,
+          "tick": 3115,
+          "pages": 429,
+          "part": 4,
+          "sourceFrame": 98,
+          "backgroundIndex": 23,
+          "shownPart": 4,
+          "shownSourceFrame": 92,
+          "playerX": -142,
+          "playerZ": 120,
+          "keys": 0,
+          "shotsFired": 5,
+          "poses": 91,
+          "hits": 0,
+          "hp": [
+            1,
+            1,
+            1,
+            1,
+            1,
+            1
+          ],
+          "encounter": 1,
+          "defeatEvents": 0,
+          "visibleFaces": 11,
+          "spans": 0,
+          "pixels": 0,
+          "shownBossAngle": 83,
+          "shownPrincipalY": 256,
+          "tilesRestored": 54337,
+          "solidTilesRestored": 23822,
+          "solidRowsRestored": 0,
+          "shownPlayerWorldX": -142,
+          "shownPlayerWorldZ": 120,
+          "shownPlayerScreenX": 97,
+          "shownPlayerScreenY": 172,
+          "shownPageTick": 3115,
+          "poseCompletedTicks": [
+            491,
+            2809,
+            2888,
+            2966,
+            3061,
+            2440,
+            2736
+          ]
+        },
+        "executedCycles": 68701090,
+        "nominalGuestSeconds": 6.870109,
+        "wallSeconds": 4.751715899998089,
+        "label": "boss holding",
+        "pageHz": 2.9111619626413496
+      }
+    ],
+    "clockBasis": "executed CPU cycles / nominal 10MHz",
+    "stageTimings": {},
+    "completeFrameTime": null,
+    "knownLimitations": [
+      "Background source cap 3Hz",
+      "Boss mean page throughput 2.91Hz remains unplayable/unaccepted",
+      "Representative boss pages: background restore about256ms dominates; foreground blit65-77ms",
+      "Shared host wall time differs from executed-cycle time; no hardware calibration"
+    ],
+    "timingModelQualification": {
+      "policyPath": "D:/work/PolygonGames/EMULATOR_TIMING_QUALIFICATION.md",
+      "emulatorName": "Champon8",
+      "emulatorVersion": "0.4.0-preview.31",
+      "emulatorExecutableSha256": "52614656c9a0e4953f8f30e1cbcceee59e381632bb1a1433e92726d5e507769c",
+      "CPUAndDisplayTimingConditions": null,
+      "auditIds": [],
+      "sameCoreComparisonScope": "Same input schedule, start position, world camera and source paths. Background raster workload grows4x (2x-enlarged256x192 -> native512x384); NOT an equal-background-payload speed comparison.",
+      "hardwareTimingCalibration": "unverified",
+      "affectedKnownTimingLimitations": []
+    },
+    "pipelineProfile": {
+      "at": "2026-10-05T19:20:10.307728+09:00",
+      "binarySha256": "eca7e44515196a5a259ca7de020d818648b2003b4224391b99c959f867483c7b",
+      "before": {
+        "ready": 42330,
+        "tick": 3130,
+        "pages": 409,
+        "part": 4,
+        "sourceFrame": 101,
+        "backgroundIndex": 0,
+        "shownPart": 4,
+        "shownSourceFrame": 0,
+        "playerX": 0,
+        "playerZ": -30,
+        "keys": 0,
+        "shotsFired": 10,
+        "poses": 83,
+        "hits": 0,
+        "hp": [
+          1,
+          1,
+          1,
+          1,
+          1,
+          1
+        ],
+        "encounter": 1,
+        "defeatEvents": 0,
+        "visibleFaces": 12,
+        "spans": 0,
+        "pixels": 0,
+        "shownBossAngle": 85,
+        "shownPrincipalY": 256,
+        "tilesRestored": 53116,
+        "solidTilesRestored": 23126,
+        "solidRowsRestored": 0,
+        "shownPlayerWorldX": 0,
+        "shownPlayerWorldZ": -30,
+        "shownPlayerScreenX": 256,
+        "shownPlayerScreenY": 298,
+        "shownPageTick": 3130,
+        "poseCompletedTicks": [
+          1322,
+          2817,
+          2897,
+          3055,
+          2643,
+          2441,
+          2740
+        ]
+      },
+      "after": {
+        "ready": 42330,
+        "tick": 3152,
+        "pages": 410,
+        "part": 4,
+        "sourceFrame": 106,
+        "backgroundIndex": 1,
+        "shownPart": 4,
+        "shownSourceFrame": 4,
+        "playerX": 0,
+        "playerZ": -30,
+        "keys": 0,
+        "shotsFired": 10,
+        "poses": 84,
+        "hits": 0,
+        "hp": [
+          1,
+          1,
+          1,
+          1,
+          1,
+          1
+        ],
+        "encounter": 1,
+        "defeatEvents": 0,
+        "visibleFaces": 12,
+        "spans": 0,
+        "pixels": 0,
+        "shownBossAngle": 87,
+        "shownPrincipalY": 256,
+        "tilesRestored": 53504,
+        "solidTilesRestored": 23270,
+        "solidRowsRestored": 0,
+        "shownPlayerWorldX": 0,
+        "shownPlayerWorldZ": -30,
+        "shownPlayerScreenX": 256,
+        "shownPlayerScreenY": 298,
+        "shownPageTick": 3152,
+        "poseCompletedTicks": [
+          1322,
+          2817,
+          2897,
+          3055,
+          3133,
+          2441,
+          2740
+        ]
+      },
+      "buckets": [
+        {
+          "until": "service",
+          "cycles": 19,
+          "stage": "main_call",
+          "nominalMilliseconds": 0.0019
+        },
+        {
+          "until": "sequence_service",
+          "cycles": 1932,
+          "stage": "input_clock_service",
+          "nominalMilliseconds": 0.1932
+        },
+        {
+          "until": "background_service",
+          "cycles": 251,
+          "stage": "sequence",
+          "nominalMilliseconds": 0.0251
+        },
+        {
+          "until": "object_snapshot",
+          "cycles": 153889,
+          "stage": "background_dictionary",
+          "nominalMilliseconds": 15.3889
+        },
+        {
+          "until": "pose_jobs",
+          "cycles": 11944,
+          "stage": "object_snapshot",
+          "nominalMilliseconds": 1.1944
+        },
+        {
+          "until": "sync_object_damage",
+          "cycles": 287201,
+          "stage": "changed_local_images",
+          "nominalMilliseconds": 28.7201
+        },
+        {
+          "until": "restore_damage",
+          "cycles": 19246,
+          "stage": "per_page_damage",
+          "nominalMilliseconds": 1.9246
+        },
+        {
+          "until": "order_objects",
+          "cycles": 2565694,
+          "stage": "background_restore",
+          "nominalMilliseconds": 256.5694
+        },
+        {
+          "until": "draw_objects",
+          "cycles": 6747,
+          "stage": "foreground_sort",
+          "nominalMilliseconds": 0.6747
+        },
+        {
+          "until": "draw_shots",
+          "cycles": 769101,
+          "stage": "foreground_blit",
+          "nominalMilliseconds": 76.9101
+        },
+        {
+          "until": "entry.blank",
+          "cycles": 656,
+          "stage": "shots",
+          "nominalMilliseconds": 0.0656
+        },
+        {
+          "until": "entry.main",
+          "cycles": 150269,
+          "stage": "vblank_flip",
+          "nominalMilliseconds": 15.0269
+        }
+      ],
+      "classification": "pipeline buckets include nested input/clock service; background restore includes late-player snapshot/damage/second restore; nominal cycles, not physical hardware timing",
+      "totalCycles": 3966949,
+      "nominalMilliseconds": 396.6949
+    },
+    "pipelineProfileReference": "D:\\work\\X68000で何か作ろう\\prototypes\\axxphorg-rich\\build\\quality-profile-1791195610346416300.json",
+    "pipelineProfiles": [
+      {
+        "reference": "D:\\work\\X68000で何か作ろう\\prototypes\\axxphorg-rich\\build\\quality-profile-1791195609018949800.json",
+        "sample": {
+          "at": "2026-10-05T19:20:08.995950+09:00",
+          "binarySha256": "eca7e44515196a5a259ca7de020d818648b2003b4224391b99c959f867483c7b",
+          "before": {
+            "ready": 42330,
+            "tick": 3110,
+            "pages": 408,
+            "part": 4,
+            "sourceFrame": 96,
+            "backgroundIndex": 23,
+            "shownPart": 4,
+            "shownSourceFrame": 92,
+            "playerX": 0,
+            "playerZ": -30,
+            "keys": 0,
+            "shotsFired": 10,
+            "poses": 83,
+            "hits": 0,
+            "hp": [
+              1,
+              1,
+              1,
+              1,
+              1,
+              1
+            ],
+            "encounter": 1,
+            "defeatEvents": 0,
+            "visibleFaces": 12,
+            "spans": 0,
+            "pixels": 0,
+            "shownBossAngle": 83,
+            "shownPrincipalY": 256,
+            "tilesRestored": 52738,
+            "solidTilesRestored": 22997,
+            "solidRowsRestored": 0,
+            "shownPlayerWorldX": 0,
+            "shownPlayerWorldZ": -30,
+            "shownPlayerScreenX": 256,
+            "shownPlayerScreenY": 298,
+            "shownPageTick": 3110,
+            "poseCompletedTicks": [
+              1322,
+              2817,
+              2897,
+              3055,
+              2643,
+              2441,
+              2740
+            ]
+          },
+          "after": {
+            "ready": 42330,
+            "tick": 3130,
+            "pages": 409,
+            "part": 4,
+            "sourceFrame": 101,
+            "backgroundIndex": 0,
+            "shownPart": 4,
+            "shownSourceFrame": 0,
+            "playerX": 0,
+            "playerZ": -30,
+            "keys": 0,
+            "shotsFired": 10,
+            "poses": 83,
+            "hits": 0,
+            "hp": [
+              1,
+              1,
+              1,
+              1,
+              1,
+              1
+            ],
+            "encounter": 1,
+            "defeatEvents": 0,
+            "visibleFaces": 12,
+            "spans": 0,
+            "pixels": 0,
+            "shownBossAngle": 85,
+            "shownPrincipalY": 256,
+            "tilesRestored": 53116,
+            "solidTilesRestored": 23126,
+            "solidRowsRestored": 0,
+            "shownPlayerWorldX": 0,
+            "shownPlayerWorldZ": -30,
+            "shownPlayerScreenX": 256,
+            "shownPlayerScreenY": 298,
+            "shownPageTick": 3130,
+            "poseCompletedTicks": [
+              1322,
+              2817,
+              2897,
+              3055,
+              2643,
+              2441,
+              2740
+            ]
+          },
+          "buckets": [
+            {
+              "until": "service",
+              "cycles": 18,
+              "stage": "main_call",
+              "nominalMilliseconds": 0.0018
+            },
+            {
+              "until": "sequence_service",
+              "cycles": 1988,
+              "stage": "input_clock_service",
+              "nominalMilliseconds": 0.1988
+            },
+            {
+              "until": "background_service",
+              "cycles": 251,
+              "stage": "sequence",
+              "nominalMilliseconds": 0.0251
+            },
+            {
+              "until": "object_snapshot",
+              "cycles": 150711,
+              "stage": "background_dictionary",
+              "nominalMilliseconds": 15.0711
+            },
+            {
+              "until": "pose_jobs",
+              "cycles": 11939,
+              "stage": "object_snapshot",
+              "nominalMilliseconds": 1.1939
+            },
+            {
+              "until": "sync_object_damage",
+              "cycles": 49544,
+              "stage": "changed_local_images",
+              "nominalMilliseconds": 4.9544
+            },
+            {
+              "until": "restore_damage",
+              "cycles": 18923,
+              "stage": "per_page_damage",
+              "nominalMilliseconds": 1.8923
+            },
+            {
+              "until": "order_objects",
+              "cycles": 2556999,
+              "stage": "background_restore",
+              "nominalMilliseconds": 255.6999
+            },
+            {
+              "until": "draw_objects",
+              "cycles": 6642,
+              "stage": "foreground_sort",
+              "nominalMilliseconds": 0.6642
+            },
+            {
+              "until": "draw_shots",
+              "cycles": 654172,
+              "stage": "foreground_blit",
+              "nominalMilliseconds": 65.4172
+            },
+            {
+              "until": "entry.blank",
+              "cycles": 657,
+              "stage": "shots",
+              "nominalMilliseconds": 0.0657
+            },
+            {
+              "until": "entry.main",
+              "cycles": 154525,
+              "stage": "vblank_flip",
+              "nominalMilliseconds": 15.4525
+            }
+          ],
+          "classification": "pipeline buckets include nested input/clock service; background restore includes late-player snapshot/damage/second restore; nominal cycles, not physical hardware timing",
+          "totalCycles": 3606369,
+          "nominalMilliseconds": 360.6369
+        }
+      },
+      {
+        "reference": "D:\\work\\X68000で何か作ろう\\prototypes\\axxphorg-rich\\build\\quality-profile-1791195610346416300.json",
+        "sample": {
+          "at": "2026-10-05T19:20:10.307728+09:00",
+          "binarySha256": "eca7e44515196a5a259ca7de020d818648b2003b4224391b99c959f867483c7b",
+          "before": {
+            "ready": 42330,
+            "tick": 3130,
+            "pages": 409,
+            "part": 4,
+            "sourceFrame": 101,
+            "backgroundIndex": 0,
+            "shownPart": 4,
+            "shownSourceFrame": 0,
+            "playerX": 0,
+            "playerZ": -30,
+            "keys": 0,
+            "shotsFired": 10,
+            "poses": 83,
+            "hits": 0,
+            "hp": [
+              1,
+              1,
+              1,
+              1,
+              1,
+              1
+            ],
+            "encounter": 1,
+            "defeatEvents": 0,
+            "visibleFaces": 12,
+            "spans": 0,
+            "pixels": 0,
+            "shownBossAngle": 85,
+            "shownPrincipalY": 256,
+            "tilesRestored": 53116,
+            "solidTilesRestored": 23126,
+            "solidRowsRestored": 0,
+            "shownPlayerWorldX": 0,
+            "shownPlayerWorldZ": -30,
+            "shownPlayerScreenX": 256,
+            "shownPlayerScreenY": 298,
+            "shownPageTick": 3130,
+            "poseCompletedTicks": [
+              1322,
+              2817,
+              2897,
+              3055,
+              2643,
+              2441,
+              2740
+            ]
+          },
+          "after": {
+            "ready": 42330,
+            "tick": 3152,
+            "pages": 410,
+            "part": 4,
+            "sourceFrame": 106,
+            "backgroundIndex": 1,
+            "shownPart": 4,
+            "shownSourceFrame": 4,
+            "playerX": 0,
+            "playerZ": -30,
+            "keys": 0,
+            "shotsFired": 10,
+            "poses": 84,
+            "hits": 0,
+            "hp": [
+              1,
+              1,
+              1,
+              1,
+              1,
+              1
+            ],
+            "encounter": 1,
+            "defeatEvents": 0,
+            "visibleFaces": 12,
+            "spans": 0,
+            "pixels": 0,
+            "shownBossAngle": 87,
+            "shownPrincipalY": 256,
+            "tilesRestored": 53504,
+            "solidTilesRestored": 23270,
+            "solidRowsRestored": 0,
+            "shownPlayerWorldX": 0,
+            "shownPlayerWorldZ": -30,
+            "shownPlayerScreenX": 256,
+            "shownPlayerScreenY": 298,
+            "shownPageTick": 3152,
+            "poseCompletedTicks": [
+              1322,
+              2817,
+              2897,
+              3055,
+              3133,
+              2441,
+              2740
+            ]
+          },
+          "buckets": [
+            {
+              "until": "service",
+              "cycles": 19,
+              "stage": "main_call",
+              "nominalMilliseconds": 0.0019
+            },
+            {
+              "until": "sequence_service",
+              "cycles": 1932,
+              "stage": "input_clock_service",
+              "nominalMilliseconds": 0.1932
+            },
+            {
+              "until": "background_service",
+              "cycles": 251,
+              "stage": "sequence",
+              "nominalMilliseconds": 0.0251
+            },
+            {
+              "until": "object_snapshot",
+              "cycles": 153889,
+              "stage": "background_dictionary",
+              "nominalMilliseconds": 15.3889
+            },
+            {
+              "until": "pose_jobs",
+              "cycles": 11944,
+              "stage": "object_snapshot",
+              "nominalMilliseconds": 1.1944
+            },
+            {
+              "until": "sync_object_damage",
+              "cycles": 287201,
+              "stage": "changed_local_images",
+              "nominalMilliseconds": 28.7201
+            },
+            {
+              "until": "restore_damage",
+              "cycles": 19246,
+              "stage": "per_page_damage",
+              "nominalMilliseconds": 1.9246
+            },
+            {
+              "until": "order_objects",
+              "cycles": 2565694,
+              "stage": "background_restore",
+              "nominalMilliseconds": 256.5694
+            },
+            {
+              "until": "draw_objects",
+              "cycles": 6747,
+              "stage": "foreground_sort",
+              "nominalMilliseconds": 0.6747
+            },
+            {
+              "until": "draw_shots",
+              "cycles": 769101,
+              "stage": "foreground_blit",
+              "nominalMilliseconds": 76.9101
+            },
+            {
+              "until": "entry.blank",
+              "cycles": 656,
+              "stage": "shots",
+              "nominalMilliseconds": 0.0656
+            },
+            {
+              "until": "entry.main",
+              "cycles": 150269,
+              "stage": "vblank_flip",
+              "nominalMilliseconds": 15.0269
+            }
+          ],
+          "classification": "pipeline buckets include nested input/clock service; background restore includes late-player snapshot/damage/second restore; nominal cycles, not physical hardware timing",
+          "totalCycles": 3966949,
+          "nominalMilliseconds": 396.6949
+        }
+      }
+    ]
+  },
+  "reuse": {
+    "codeLicense": null,
+    "assetProvenance": [],
+    "redistributionStatus": "unassessed",
+    "referenceAssetsIncluded": false,
+    "adapterWorkRequired": [],
+    "gameDependencies": []
+  },
+  "breakingChanges": [],
+  "knownIssues": [
+    "Boss page rate and pose/background update cadence remain too low for playable acceptance",
+    "Battleship throughput regresses from5.66Hz to4.47Hz at the higher native raster resolution",
+    "No per-pixel foreground/background depth masking",
+    "Native keyboard, Human68k wrapper and hardware unverified",
+    "Combat/score/victory/audio/full-game flow and human visual acceptance remain incomplete"
+  ],
+  "requestedNextStep": "Review actual native512 boss and input recordings; optimize background restore/foreground transfer without reducing colors or model completeness. Native-input and full-game acceptance remain separate.",
+  "optimizationPreservationPolicyId": "20260917-optimization-preservation-01",
+  "optimizationAdaptationNotes": {
+    "preservedOptimizations": [
+      "unchanged tile skip",
+      "completed-image caching",
+      "partial damage",
+      "double buffering",
+      "fixed camera"
+    ],
+    "changedFineDetails": [
+      "Reversed mixed/solid background tile dispatch fixed; high-word leakage in tile VRAM address removed",
+      "Same camera/FOV/models/colors: background re-rasterized offline at native512x384, not 2x upscaling or SSAA",
+      "Repeat-row/color-run tile dictionary and compact map tokens fit standard 1MiB; unchanged tile work remains skipped",
+      "Scalar color/run dispatch table and unrolled word/long fills; no pose-image LUT",
+      "Non-player pose generation split into one phase/page, at most four complete faces; no removed faces/colors",
+      "32KiB staging image: publish only complete poses; previous complete images keep translating",
+      "Player snapshot refreshed after background restore and damaged pixels restored again; mid-page key edges are not silently acknowledged",
+      "Normal actor tick wrap fixed without changing phase/movement contract"
+    ],
+    "performanceReason": "Repair real tile corruption and native resolution while reducing the six-pose input barrier; remaining dominant background transfer/restore is measured, not accepted",
+    "behaviorAndAppearanceImpact": "No camera staging, color sacrifice or mesh thinning. This is a quality/latency checkpoint, not a finished high-FPS game.",
+    "comparisonEvidence": [],
+    "guidance": "Declare relevant adaptations; do not remove optimizations for exact fine-detail identity or create a new blanket approval/benchmark gate."
+  },
+  "requestId": "20261005-axxphorg-quality-repair-02",
+  "fixedProjection": {
+    "cameraPosition": [
+      0,
+      120,
+      -140
+    ],
+    "pitchDegrees": 40,
+    "focalPhysicalPixels": 310,
+    "principalPhysicalPixels": [
+      256,
+      256
+    ],
+    "fixedDuringNormalPlay": true
+  },
+  "assets": {
+    "sourceRoot": "D:\\work\\PolygonGames\\proposals\\20261005-axxphorg-six-part-background-v05",
+    "manifestSha256": "8081535bbb4d7209ea29b9f00c5d68ef9b007d7cf42e925d08130bf75dfc6bea",
+    "background": {
+      "source": [
+        512,
+        384
+      ],
+      "physical": [
+        512,
+        384
+      ],
+      "origin": [
+        0,
+        64
+      ],
+      "samplesPerSourceSecond": 3.0,
+      "ssaa": false,
+      "codec": {
+        "name": "native16-repeat-row-color-run-tiles-v2",
+        "dictionaryTiles": 18510,
+        "pointerTableAddress": 65536,
+        "pointerTableBytes": 74040,
+        "mapBytes": 101406,
+        "physicalTilePixels": [
+          16,
+          16
+        ],
+        "currentTileIdsAddress": 972800,
+        "unchangedTileDecodeAndTransferSkipped": true,
+        "nativeRaster": true,
+        "offlineBackgroundOnly": true,
+        "sourceCameraChanged": false
+      },
+      "commonSource": [
+        256,
+        192
+      ],
+      "adaptation": "Read-only original vector models/paths rerasterized at native512; no camera change or SSAA"
+    },
+    "foreground": {
+      "runtime3d": true,
+      "offlinePoseImages": false,
+      "materialLighting": "scalar face-light LUT, not pose images",
+      "localImages": [
+        {
+          "slot": 0,
+          "address": 458752,
+          "size": 192,
+          "stride": 384,
+          "boundsAddress": 737280
+        },
+        {
+          "slot": 1,
+          "address": 532480,
+          "size": 128,
+          "stride": 256,
+          "boundsAddress": 738048
+        },
+        {
+          "slot": 2,
+          "address": 565248,
+          "size": 128,
+          "stride": 256,
+          "boundsAddress": 738816
+        },
+        {
+          "slot": 3,
+          "address": 598016,
+          "size": 128,
+          "stride": 256,
+          "boundsAddress": 739584
+        },
+        {
+          "slot": 4,
+          "address": 630784,
+          "size": 128,
+          "stride": 256,
+          "boundsAddress": 740352
+        },
+        {
+          "slot": 5,
+          "address": 663552,
+          "size": 128,
+          "stride": 256,
+          "boundsAddress": 741120
+        },
+        {
+          "slot": 6,
+          "address": 696320,
+          "size": 128,
+          "stride": 256,
+          "boundsAddress": 741888
+        }
+      ]
+    }
+  },
+  "repairs": [
+    "Reversed mixed/solid background tile dispatch fixed; high-word leakage in tile VRAM address removed",
+    "Same camera/FOV/models/colors: background re-rasterized offline at native512x384, not 2x upscaling or SSAA",
+    "Repeat-row/color-run tile dictionary and compact map tokens fit standard 1MiB; unchanged tile work remains skipped",
+    "Scalar color/run dispatch table and unrolled word/long fills; no pose-image LUT",
+    "Non-player pose generation split into one phase/page, at most four complete faces; no removed faces/colors",
+    "32KiB staging image: publish only complete poses; previous complete images keep translating",
+    "Player snapshot refreshed after background restore and damaged pixels restored again; mid-page key edges are not silently acknowledged",
+    "Normal actor tick wrap fixed without changing phase/movement contract"
+  ],
+  "verification": {
+    "report": "D:\\work\\X68000で何か作ろう\\prototypes\\axxphorg-rich\\build\\verification-1791194791688474900\\result.json",
+    "reportSha256": "f2725fe42dc52f5aa1b7698107188e4965b2c892aad574b2f87da7f48fa6a20f",
+    "checks": {
+      "heldMoveFireRelease": {
+        "right": {
+          "before": {
+            "ready": 42330,
+            "tick": 20,
+            "pages": 1,
+            "part": 0,
+            "sourceFrame": 4,
+            "backgroundIndex": 0,
+            "shownPart": 0,
+            "shownSourceFrame": 0,
+            "playerX": 0,
+            "playerZ": -30,
+            "keys": 0,
+            "shotsFired": 0,
+            "poses": 2,
+            "hits": 0,
+            "hp": [
+              0,
+              0,
+              0,
+              0,
+              0,
+              0
+            ],
+            "encounter": 0,
+            "defeatEvents": 0,
+            "visibleFaces": 17,
+            "spans": 0,
+            "pixels": 0,
+            "shownBossAngle": 0,
+            "shownPrincipalY": 256,
+            "tilesRestored": 768,
+            "solidTilesRestored": 714,
+            "solidRowsRestored": 0,
+            "shownPlayerWorldX": 0,
+            "shownPlayerWorldZ": -30,
+            "shownPlayerScreenX": 256,
+            "shownPlayerScreenY": 298,
+            "shownPageTick": 20,
+            "poseCompletedTicks": [
+              3,
+              5,
+              0,
+              0,
+              0,
+              0,
+              0
+            ]
+          },
+          "after": {
+            "ready": 42330,
+            "tick": 55,
+            "pages": 5,
+            "part": 0,
+            "sourceFrame": 11,
+            "backgroundIndex": 2,
+            "shownPart": 0,
+            "shownSourceFrame": 8,
+            "playerX": 70,
+            "playerZ": -30,
+            "keys": 18,
+            "shotsFired": 5,
+            "poses": 3,
+            "hits": 0,
+            "hp": [
+              0,
+              0,
+              0,
+              0,
+              0,
+              0
+            ],
+            "encounter": 0,
+            "defeatEvents": 0,
+            "visibleFaces": 12,
+            "spans": 0,
+            "pixels": 0,
+            "shownBossAngle": 4,
+            "shownPrincipalY": 256,
+            "tilesRestored": 1885,
+            "solidTilesRestored": 1688,
+            "solidRowsRestored": 0,
+            "shownPlayerWorldX": 68,
+            "shownPlayerWorldZ": -30,
+            "shownPlayerScreenX": 386,
+            "shownPlayerScreenY": 298,
+            "shownPageTick": 55,
+            "poseCompletedTicks": [
+              40,
+              5,
+              0,
+              0,
+              0,
+              0,
+              0
+            ]
+          },
+          "executedCycles": 6311127,
+          "nominalGuestSeconds": 0.6311127,
+          "wallSeconds": 0.42634380000527017
+        },
+        "left": {
+          "before": {
+            "ready": 42330,
+            "tick": 55,
+            "pages": 5,
+            "part": 0,
+            "sourceFrame": 11,
+            "backgroundIndex": 2,
+            "shownPart": 0,
+            "shownSourceFrame": 8,
+            "playerX": 70,
+            "playerZ": -30,
+            "keys": 18,
+            "shotsFired": 5,
+            "poses": 3,
+            "hits": 0,
+            "hp": [
+              0,
+              0,
+              0,
+              0,
+              0,
+              0
+            ],
+            "encounter": 0,
+            "defeatEvents": 0,
+            "visibleFaces": 12,
+            "spans": 0,
+            "pixels": 0,
+            "shownBossAngle": 4,
+            "shownPrincipalY": 256,
+            "tilesRestored": 1885,
+            "solidTilesRestored": 1688,
+            "solidRowsRestored": 0,
+            "shownPlayerWorldX": 68,
+            "shownPlayerWorldZ": -30,
+            "shownPlayerScreenX": 386,
+            "shownPlayerScreenY": 298,
+            "shownPageTick": 55,
+            "poseCompletedTicks": [
+              40,
+              5,
+              0,
+              0,
+              0,
+              0,
+              0
+            ]
+          },
+          "after": {
+            "ready": 42330,
+            "tick": 75,
+            "pages": 9,
+            "part": 0,
+            "sourceFrame": 16,
+            "backgroundIndex": 3,
+            "shownPart": 0,
+            "shownSourceFrame": 12,
+            "playerX": 30,
+            "playerZ": -30,
+            "keys": 1,
+            "shotsFired": 5,
+            "poses": 5,
+            "hits": 0,
+            "hp": [
+              0,
+              0,
+              0,
+              0,
+              0,
+              0
+            ],
+            "encounter": 0,
+            "defeatEvents": 0,
+            "visibleFaces": 15,
+            "spans": 0,
+            "pixels": 0,
+            "shownBossAngle": 5,
+            "shownPrincipalY": 256,
+            "tilesRestored": 2209,
+            "solidTilesRestored": 1926,
+            "solidRowsRestored": 0,
+            "shownPlayerWorldX": 32,
+            "shownPlayerWorldZ": -30,
+            "shownPlayerScreenX": 317,
+            "shownPlayerScreenY": 298,
+            "shownPageTick": 75,
+            "poseCompletedTicks": [
+              72,
+              68,
+              0,
+              0,
+              0,
+              0,
+              0
+            ]
+          },
+          "executedCycles": 3606332,
+          "nominalGuestSeconds": 0.3606332,
+          "wallSeconds": 0.2922158000001218
+        },
+        "released": {
+          "ready": 42330,
+          "tick": 86,
+          "pages": 11,
+          "part": 0,
+          "sourceFrame": 18,
+          "backgroundIndex": 4,
+          "shownPart": 0,
+          "shownSourceFrame": 16,
+          "playerX": 30,
+          "playerZ": -30,
+          "keys": 0,
+          "shotsFired": 5,
+          "poses": 5,
+          "hits": 0,
+          "hp": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          "encounter": 0,
+          "defeatEvents": 0,
+          "visibleFaces": 16,
+          "spans": 0,
+          "pixels": 0,
+          "shownBossAngle": 7,
+          "shownPrincipalY": 256,
+          "tilesRestored": 2405,
+          "solidTilesRestored": 2030,
+          "solidRowsRestored": 0,
+          "shownPlayerWorldX": 30,
+          "shownPlayerWorldZ": -30,
+          "shownPlayerScreenX": 313,
+          "shownPlayerScreenY": 298,
+          "shownPageTick": 86,
+          "poseCompletedTicks": [
+            72,
+            68,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        "physicalKeyboard": false,
+        "phaseTimeInjection": false
+      },
+      "viewportHeldDirections": [
+        {
+          "label": "right-forward",
+          "state": {
+            "ready": 42330,
+            "tick": 165,
+            "pages": 32,
+            "part": 0,
+            "sourceFrame": 35,
+            "backgroundIndex": 8,
+            "shownPart": 0,
+            "shownSourceFrame": 32,
+            "playerX": 140,
+            "playerZ": 116,
+            "keys": 0,
+            "shotsFired": 5,
+            "poses": 9,
+            "hits": 0,
+            "hp": [
+              0,
+              0,
+              0,
+              0,
+              0,
+              0
+            ],
+            "encounter": 0,
+            "defeatEvents": 0,
+            "visibleFaces": 17,
+            "spans": 0,
+            "pixels": 0,
+            "shownBossAngle": 14,
+            "shownPrincipalY": 256,
+            "tilesRestored": 3507,
+            "solidTilesRestored": 2752,
+            "solidRowsRestored": 0,
+            "shownPlayerWorldX": 140,
+            "shownPlayerWorldZ": 116,
+            "shownPlayerScreenX": 414,
+            "shownPlayerScreenY": 175,
+            "shownPageTick": 165,
+            "poseCompletedTicks": [
+              126,
+              148,
+              122,
+              0,
+              0,
+              0,
+              0
+            ]
+          },
+          "displayedPlayer": [
+            414,
+            175,
+            273,
+            0,
+            0,
+            1,
+            0,
+            0
+          ]
+        },
+        {
+          "label": "right-backward",
+          "state": {
+            "ready": 42330,
+            "tick": 253,
+            "pages": 51,
+            "part": 0,
+            "sourceFrame": 54,
+            "backgroundIndex": 13,
+            "shownPart": 0,
+            "shownSourceFrame": 52,
+            "playerX": 75,
+            "playerZ": -50,
+            "keys": 0,
+            "shotsFired": 5,
+            "poses": 13,
+            "hits": 0,
+            "hp": [
+              0,
+              0,
+              0,
+              0,
+              0,
+              0
+            ],
+            "encounter": 0,
+            "defeatEvents": 0,
+            "visibleFaces": 16,
+            "spans": 0,
+            "pixels": 0,
+            "shownBossAngle": 23,
+            "shownPrincipalY": 256,
+            "tilesRestored": 4768,
+            "solidTilesRestored": 3507,
+            "solidRowsRestored": 0,
+            "shownPlayerWorldX": 75,
+            "shownPlayerWorldZ": -50,
+            "shownPlayerScreenX": 415,
+            "shownPlayerScreenY": 330,
+            "shownPageTick": 253,
+            "poseCompletedTicks": [
+              206,
+              230,
+              179,
+              201,
+              0,
+              0,
+              0
+            ]
+          },
+          "displayedPlayer": [
+            415,
+            330,
+            146,
+            0,
+            0,
+            1,
+            0,
+            0
+          ]
+        },
+        {
+          "label": "left-backward",
+          "state": {
+            "ready": 42330,
+            "tick": 351,
+            "pages": 70,
+            "part": 0,
+            "sourceFrame": 75,
+            "backgroundIndex": 18,
+            "shownPart": 0,
+            "shownSourceFrame": 72,
+            "playerX": -67,
+            "playerZ": -70,
+            "keys": 0,
+            "shotsFired": 5,
+            "poses": 17,
+            "hits": 0,
+            "hp": [
+              0,
+              0,
+              0,
+              0,
+              0,
+              0
+            ],
+            "encounter": 0,
+            "defeatEvents": 0,
+            "visibleFaces": 16,
+            "spans": 0,
+            "pixels": 0,
+            "shownBossAngle": 32,
+            "shownPrincipalY": 256,
+            "tilesRestored": 6395,
+            "solidTilesRestored": 4655,
+            "solidRowsRestored": 0,
+            "shownPlayerWorldX": -67,
+            "shownPlayerWorldZ": -70,
+            "shownPlayerScreenX": 97,
+            "shownPlayerScreenY": 368,
+            "shownPageTick": 351,
+            "poseCompletedTicks": [
+              318,
+              230,
+              262,
+              291,
+              313,
+              0,
+              0
+            ]
+          },
+          "displayedPlayer": [
+            97,
+            368,
+            130,
+            0,
+            0,
+            1,
+            0,
+            0
+          ]
+        },
+        {
+          "label": "left-forward",
+          "state": {
+            "ready": 42330,
+            "tick": 481,
+            "pages": 89,
+            "part": 0,
+            "sourceFrame": 8,
+            "backgroundIndex": 1,
+            "shownPart": 0,
+            "shownSourceFrame": 4,
+            "playerX": -142,
+            "playerZ": 120,
+            "keys": 0,
+            "shotsFired": 5,
+            "poses": 20,
+            "hits": 0,
+            "hp": [
+              0,
+              0,
+              0,
+              0,
+              0,
+              0
+            ],
+            "encounter": 0,
+            "defeatEvents": 0,
+            "visibleFaces": 17,
+            "spans": 0,
+            "pixels": 0,
+            "shownBossAngle": 2,
+            "shownPrincipalY": 256,
+            "tilesRestored": 8828,
+            "solidTilesRestored": 6424,
+            "solidRowsRestored": 0,
+            "shownPlayerWorldX": -142,
+            "shownPlayerWorldZ": 120,
+            "shownPlayerScreenX": 97,
+            "shownPlayerScreenY": 172,
+            "shownPageTick": 481,
+            "poseCompletedTicks": [
+              318,
+              356,
+              393,
+              430,
+              313,
+              0,
+              0
+            ]
+          },
+          "displayedPlayer": [
+            97,
+            172,
+            276,
+            0,
+            0,
+            1,
+            0,
+            0
+          ]
+        }
+      ],
+      "battleshipEnemyLimit": 1,
+      "hpPersistsAtSixtyDegrees": {
+        "hp": [
+          1,
+          1,
+          1,
+          1,
+          1,
+          1
+        ],
+        "state": {
+          "ready": 42330,
+          "tick": 3176,
+          "pages": 432,
+          "part": 4,
+          "sourceFrame": 111,
+          "backgroundIndex": 2,
+          "shownPart": 4,
+          "shownSourceFrame": 8,
+          "playerX": -142,
+          "playerZ": 120,
+          "keys": 0,
+          "shotsFired": 5,
+          "poses": 92,
+          "hits": 0,
+          "hp": [
+            1,
+            1,
+            1,
+            1,
+            1,
+            1
+          ],
+          "encounter": 1,
+          "defeatEvents": 0,
+          "visibleFaces": 12,
+          "spans": 0,
+          "pixels": 0,
+          "shownBossAngle": 89,
+          "shownPrincipalY": 256,
+          "tilesRestored": 55516,
+          "solidTilesRestored": 24269,
+          "solidRowsRestored": 0,
+          "shownPlayerWorldX": -142,
+          "shownPlayerWorldZ": 120,
+          "shownPlayerScreenX": 97,
+          "shownPlayerScreenY": 172,
+          "shownPageTick": 3176,
+          "poseCompletedTicks": [
+            491,
+            2809,
+            2888,
+            2966,
+            3061,
+            3136,
+            2736
+          ]
+        }
+      },
+      "bossNoNormalEnemiesArrivalHoldDeparture": true,
+      "naturalDeadlineDepartureNoPhaseInjection": true,
+      "secondPlaylistReusesAssets": true
+    },
+    "oracles": [
+      {
+        "label": "stars-start",
+        "state": {
+          "ready": 42330,
+          "tick": 20,
+          "pages": 1,
+          "part": 0,
+          "sourceFrame": 4,
+          "backgroundIndex": 0,
+          "shownPart": 0,
+          "shownSourceFrame": 0,
+          "playerX": 0,
+          "playerZ": -30,
+          "keys": 0,
+          "shotsFired": 0,
+          "poses": 2,
+          "hits": 0,
+          "hp": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          "encounter": 0,
+          "defeatEvents": 0,
+          "visibleFaces": 17,
+          "spans": 0,
+          "pixels": 0,
+          "shownBossAngle": 0,
+          "shownPrincipalY": 256,
+          "tilesRestored": 768,
+          "solidTilesRestored": 714,
+          "solidRowsRestored": 0,
+          "shownPlayerWorldX": 0,
+          "shownPlayerWorldZ": -30,
+          "shownPlayerScreenX": 256,
+          "shownPlayerScreenY": 298,
+          "shownPageTick": 20,
+          "poseCompletedTicks": [
+            3,
+            5,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        "backgroundPixelsCompared": 196608,
+        "pagePixelsCompared": 262144,
+        "mismatches": 0,
+        "projection": {
+          "model": "enemy",
+          "vertices": 26,
+          "exactQ14Projection": true
+        },
+        "uniqueScreenColors": 19,
+        "opaqueObjects": [
+          {
+            "slot": 1,
+            "kind": 1,
+            "opaquePixels": 59
+          },
+          {
+            "slot": 0,
+            "kind": 0,
+            "opaquePixels": 628
+          }
+        ],
+        "foregroundOrder": "far-to-near local objects; no per-pixel background depth mask",
+        "screenshot": "D:\\work\\X68000で何か作ろう\\prototypes\\axxphorg-rich\\build\\verification-1791194791688474900\\stars-start.png"
+      },
+      {
+        "label": "input-right-forward",
+        "state": {
+          "ready": 42330,
+          "tick": 165,
+          "pages": 32,
+          "part": 0,
+          "sourceFrame": 35,
+          "backgroundIndex": 8,
+          "shownPart": 0,
+          "shownSourceFrame": 32,
+          "playerX": 140,
+          "playerZ": 116,
+          "keys": 0,
+          "shotsFired": 5,
+          "poses": 9,
+          "hits": 0,
+          "hp": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          "encounter": 0,
+          "defeatEvents": 0,
+          "visibleFaces": 17,
+          "spans": 0,
+          "pixels": 0,
+          "shownBossAngle": 14,
+          "shownPrincipalY": 256,
+          "tilesRestored": 3507,
+          "solidTilesRestored": 2752,
+          "solidRowsRestored": 0,
+          "shownPlayerWorldX": 140,
+          "shownPlayerWorldZ": 116,
+          "shownPlayerScreenX": 414,
+          "shownPlayerScreenY": 175,
+          "shownPageTick": 165,
+          "poseCompletedTicks": [
+            126,
+            148,
+            122,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        "backgroundPixelsCompared": 196608,
+        "pagePixelsCompared": 262144,
+        "mismatches": 0,
+        "projection": {
+          "model": "enemy",
+          "vertices": 26,
+          "exactQ14Projection": true
+        },
+        "uniqueScreenColors": 19,
+        "opaqueObjects": [
+          {
+            "slot": 2,
+            "kind": 1,
+            "opaquePixels": 61
+          },
+          {
+            "slot": 1,
+            "kind": 1,
+            "opaquePixels": 159
+          },
+          {
+            "slot": 0,
+            "kind": 0,
+            "opaquePixels": 323
+          }
+        ],
+        "foregroundOrder": "far-to-near local objects; no per-pixel background depth mask",
+        "screenshot": "D:\\work\\X68000で何か作ろう\\prototypes\\axxphorg-rich\\build\\verification-1791194791688474900\\input-right-forward.png"
+      },
+      {
+        "label": "input-right-backward",
+        "state": {
+          "ready": 42330,
+          "tick": 253,
+          "pages": 51,
+          "part": 0,
+          "sourceFrame": 54,
+          "backgroundIndex": 13,
+          "shownPart": 0,
+          "shownSourceFrame": 52,
+          "playerX": 75,
+          "playerZ": -50,
+          "keys": 0,
+          "shotsFired": 5,
+          "poses": 13,
+          "hits": 0,
+          "hp": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          "encounter": 0,
+          "defeatEvents": 0,
+          "visibleFaces": 16,
+          "spans": 0,
+          "pixels": 0,
+          "shownBossAngle": 23,
+          "shownPrincipalY": 256,
+          "tilesRestored": 4768,
+          "solidTilesRestored": 3507,
+          "solidRowsRestored": 0,
+          "shownPlayerWorldX": 75,
+          "shownPlayerWorldZ": -50,
+          "shownPlayerScreenX": 415,
+          "shownPlayerScreenY": 330,
+          "shownPageTick": 253,
+          "poseCompletedTicks": [
+            206,
+            230,
+            179,
+            201,
+            0,
+            0,
+            0
+          ]
+        },
+        "backgroundPixelsCompared": 196608,
+        "pagePixelsCompared": 262144,
+        "mismatches": 0,
+        "projection": {
+          "model": "enemy",
+          "vertices": 26,
+          "exactQ14Projection": true
+        },
+        "uniqueScreenColors": 20,
+        "opaqueObjects": [
+          {
+            "slot": 3,
+            "kind": 1,
+            "opaquePixels": 67
+          },
+          {
+            "slot": 2,
+            "kind": 1,
+            "opaquePixels": 98
+          },
+          {
+            "slot": 1,
+            "kind": 1,
+            "opaquePixels": 525
+          },
+          {
+            "slot": 0,
+            "kind": 0,
+            "opaquePixels": 334
+          }
+        ],
+        "foregroundOrder": "far-to-near local objects; no per-pixel background depth mask",
+        "screenshot": "D:\\work\\X68000で何か作ろう\\prototypes\\axxphorg-rich\\build\\verification-1791194791688474900\\input-right-backward.png"
+      },
+      {
+        "label": "input-left-backward",
+        "state": {
+          "ready": 42330,
+          "tick": 351,
+          "pages": 70,
+          "part": 0,
+          "sourceFrame": 75,
+          "backgroundIndex": 18,
+          "shownPart": 0,
+          "shownSourceFrame": 72,
+          "playerX": -67,
+          "playerZ": -70,
+          "keys": 0,
+          "shotsFired": 5,
+          "poses": 17,
+          "hits": 0,
+          "hp": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          "encounter": 0,
+          "defeatEvents": 0,
+          "visibleFaces": 16,
+          "spans": 0,
+          "pixels": 0,
+          "shownBossAngle": 32,
+          "shownPrincipalY": 256,
+          "tilesRestored": 6395,
+          "solidTilesRestored": 4655,
+          "solidRowsRestored": 0,
+          "shownPlayerWorldX": -67,
+          "shownPlayerWorldZ": -70,
+          "shownPlayerScreenX": 97,
+          "shownPlayerScreenY": 368,
+          "shownPageTick": 351,
+          "poseCompletedTicks": [
+            318,
+            230,
+            262,
+            291,
+            313,
+            0,
+            0
+          ]
+        },
+        "backgroundPixelsCompared": 196608,
+        "pagePixelsCompared": 262144,
+        "mismatches": 0,
+        "projection": {
+          "model": "enemy",
+          "vertices": 26,
+          "exactQ14Projection": true
+        },
+        "uniqueScreenColors": 23,
+        "opaqueObjects": [
+          {
+            "slot": 1,
+            "kind": 1,
+            "opaquePixels": 525
+          },
+          {
+            "slot": 4,
+            "kind": 1,
+            "opaquePixels": 93
+          },
+          {
+            "slot": 3,
+            "kind": 1,
+            "opaquePixels": 141
+          },
+          {
+            "slot": 2,
+            "kind": 1,
+            "opaquePixels": 213
+          },
+          {
+            "slot": 0,
+            "kind": 0,
+            "opaquePixels": 1295
+          }
+        ],
+        "foregroundOrder": "far-to-near local objects; no per-pixel background depth mask",
+        "screenshot": "D:\\work\\X68000で何か作ろう\\prototypes\\axxphorg-rich\\build\\verification-1791194791688474900\\input-left-backward.png"
+      },
+      {
+        "label": "input-left-forward",
+        "state": {
+          "ready": 42330,
+          "tick": 481,
+          "pages": 89,
+          "part": 0,
+          "sourceFrame": 8,
+          "backgroundIndex": 1,
+          "shownPart": 0,
+          "shownSourceFrame": 4,
+          "playerX": -142,
+          "playerZ": 120,
+          "keys": 0,
+          "shotsFired": 5,
+          "poses": 20,
+          "hits": 0,
+          "hp": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          "encounter": 0,
+          "defeatEvents": 0,
+          "visibleFaces": 17,
+          "spans": 0,
+          "pixels": 0,
+          "shownBossAngle": 2,
+          "shownPrincipalY": 256,
+          "tilesRestored": 8828,
+          "solidTilesRestored": 6424,
+          "solidRowsRestored": 0,
+          "shownPlayerWorldX": -142,
+          "shownPlayerWorldZ": 120,
+          "shownPlayerScreenX": 97,
+          "shownPlayerScreenY": 172,
+          "shownPageTick": 481,
+          "poseCompletedTicks": [
+            318,
+            356,
+            393,
+            430,
+            313,
+            0,
+            0
+          ]
+        },
+        "backgroundPixelsCompared": 196608,
+        "pagePixelsCompared": 262144,
+        "mismatches": 0,
+        "projection": {
+          "model": "enemy",
+          "vertices": 26,
+          "exactQ14Projection": true
+        },
+        "uniqueScreenColors": 22,
+        "opaqueObjects": [
+          {
+            "slot": 2,
+            "kind": 1,
+            "opaquePixels": 2589
+          },
+          {
+            "slot": 1,
+            "kind": 1,
+            "opaquePixels": 70
+          },
+          {
+            "slot": 0,
+            "kind": 0,
+            "opaquePixels": 1295
+          },
+          {
+            "slot": 4,
+            "kind": 1,
+            "opaquePixels": 93
+          },
+          {
+            "slot": 3,
+            "kind": 1,
+            "opaquePixels": 858
+          }
+        ],
+        "foregroundOrder": "far-to-near local objects; no per-pixel background depth mask",
+        "screenshot": "D:\\work\\X68000で何か作ろう\\prototypes\\axxphorg-rich\\build\\verification-1791194791688474900\\input-left-forward.png"
+      },
+      {
+        "label": "stars-steady",
+        "state": {
+          "ready": 42330,
+          "tick": 636,
+          "pages": 117,
+          "part": 0,
+          "sourceFrame": 41,
+          "backgroundIndex": 10,
+          "shownPart": 0,
+          "shownSourceFrame": 40,
+          "playerX": -142,
+          "playerZ": 120,
+          "keys": 0,
+          "shotsFired": 5,
+          "poses": 27,
+          "hits": 0,
+          "hp": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          "encounter": 0,
+          "defeatEvents": 0,
+          "visibleFaces": 18,
+          "spans": 0,
+          "pixels": 0,
+          "shownBossAngle": 18,
+          "shownPrincipalY": 256,
+          "tilesRestored": 11036,
+          "solidTilesRestored": 7846,
+          "solidRowsRestored": 0,
+          "shownPlayerWorldX": -142,
+          "shownPlayerWorldZ": 120,
+          "shownPlayerScreenX": 97,
+          "shownPlayerScreenY": 172,
+          "shownPageTick": 636,
+          "poseCompletedTicks": [
+            491,
+            632,
+            557,
+            582,
+            607,
+            0,
+            0
+          ]
+        },
+        "backgroundPixelsCompared": 196608,
+        "pagePixelsCompared": 262144,
+        "mismatches": 0,
+        "projection": {
+          "model": "enemy",
+          "vertices": 26,
+          "exactQ14Projection": true
+        },
+        "uniqueScreenColors": 22,
+        "opaqueObjects": [
+          {
+            "slot": 4,
+            "kind": 1,
+            "opaquePixels": 77
+          },
+          {
+            "slot": 3,
+            "kind": 1,
+            "opaquePixels": 110
+          },
+          {
+            "slot": 0,
+            "kind": 0,
+            "opaquePixels": 162
+          },
+          {
+            "slot": 2,
+            "kind": 1,
+            "opaquePixels": 174
+          },
+          {
+            "slot": 1,
+            "kind": 1,
+            "opaquePixels": 3632
+          }
+        ],
+        "foregroundOrder": "far-to-near local objects; no per-pixel background depth mask",
+        "screenshot": "D:\\work\\X68000で何か作ろう\\prototypes\\axxphorg-rich\\build\\verification-1791194791688474900\\stars-steady.png"
+      },
+      {
+        "label": "battleship-near",
+        "state": {
+          "ready": 42330,
+          "tick": 1199,
+          "pages": 226,
+          "part": 2,
+          "sourceFrame": 67,
+          "backgroundIndex": 16,
+          "shownPart": 2,
+          "shownSourceFrame": 64,
+          "playerX": -142,
+          "playerZ": 120,
+          "keys": 0,
+          "shotsFired": 5,
+          "poses": 47,
+          "hits": 0,
+          "hp": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          "encounter": 0,
+          "defeatEvents": 0,
+          "visibleFaces": 14,
+          "spans": 0,
+          "pixels": 0,
+          "shownBossAngle": 28,
+          "shownPrincipalY": 256,
+          "tilesRestored": 19034,
+          "solidTilesRestored": 12016,
+          "solidRowsRestored": 0,
+          "shownPlayerWorldX": -142,
+          "shownPlayerWorldZ": 120,
+          "shownPlayerScreenX": 97,
+          "shownPlayerScreenY": 172,
+          "shownPageTick": 1199,
+          "poseCompletedTicks": [
+            491,
+            1157,
+            831,
+            853,
+            876,
+            0,
+            0
+          ]
+        },
+        "backgroundPixelsCompared": 196608,
+        "pagePixelsCompared": 262144,
+        "mismatches": 0,
+        "projection": {
+          "model": "enemy",
+          "vertices": 26,
+          "exactQ14Projection": true
+        },
+        "uniqueScreenColors": 26,
+        "opaqueObjects": [
+          {
+            "slot": 1,
+            "kind": 1,
+            "opaquePixels": 821
+          },
+          {
+            "slot": 0,
+            "kind": 0,
+            "opaquePixels": 162
+          }
+        ],
+        "foregroundOrder": "far-to-near local objects; no per-pixel background depth mask",
+        "screenshot": "D:\\work\\X68000で何か作ろう\\prototypes\\axxphorg-rich\\build\\verification-1791194791688474900\\battleship-near.png"
+      },
+      {
+        "label": "boss-arrival",
+        "state": {
+          "ready": 42330,
+          "tick": 2448,
+          "pages": 382,
+          "part": 3,
+          "sourceFrame": 49,
+          "backgroundIndex": 12,
+          "shownPart": 3,
+          "shownSourceFrame": 48,
+          "playerX": -142,
+          "playerZ": 120,
+          "keys": 0,
+          "shotsFired": 5,
+          "poses": 81,
+          "hits": 0,
+          "hp": [
+            1,
+            1,
+            1,
+            1,
+            1,
+            1
+          ],
+          "encounter": 1,
+          "defeatEvents": 0,
+          "visibleFaces": 12,
+          "spans": 0,
+          "pixels": 0,
+          "shownBossAngle": 21,
+          "shownPrincipalY": 256,
+          "tilesRestored": 40986,
+          "solidTilesRestored": 18850,
+          "solidRowsRestored": 0,
+          "shownPlayerWorldX": -142,
+          "shownPlayerWorldZ": 120,
+          "shownPlayerScreenX": 97,
+          "shownPlayerScreenY": 172,
+          "shownPageTick": 2448,
+          "poseCompletedTicks": [
+            491,
+            2384,
+            2399,
+            2414,
+            2424,
+            2440,
+            2373
+          ]
+        },
+        "backgroundPixelsCompared": 196608,
+        "pagePixelsCompared": 262144,
+        "mismatches": 0,
+        "projection": {
+          "model": "part",
+          "vertices": 18,
+          "exactQ14Projection": true
+        },
+        "uniqueScreenColors": 24,
+        "opaqueObjects": [
+          {
+            "slot": 3,
+            "kind": 2,
+            "opaquePixels": 25
+          },
+          {
+            "slot": 2,
+            "kind": 2,
+            "opaquePixels": 16
+          },
+          {
+            "slot": 4,
+            "kind": 2,
+            "opaquePixels": 25
+          },
+          {
+            "slot": 1,
+            "kind": 2,
+            "opaquePixels": 17
+          },
+          {
+            "slot": 5,
+            "kind": 2,
+            "opaquePixels": 47
+          },
+          {
+            "slot": 6,
+            "kind": 2,
+            "opaquePixels": 24
+          },
+          {
+            "slot": 0,
+            "kind": 0,
+            "opaquePixels": 162
+          }
+        ],
+        "foregroundOrder": "far-to-near local objects; no per-pixel background depth mask",
+        "screenshot": "D:\\work\\X68000で何か作ろう\\prototypes\\axxphorg-rich\\build\\verification-1791194791688474900\\boss-arrival.png"
+      },
+      {
+        "label": "boss-hold",
+        "state": {
+          "ready": 42330,
+          "tick": 2734,
+          "pages": 409,
+          "part": 4,
+          "sourceFrame": 15,
+          "backgroundIndex": 3,
+          "shownPart": 4,
+          "shownSourceFrame": 12,
+          "playerX": -142,
+          "playerZ": 120,
+          "keys": 0,
+          "shotsFired": 5,
+          "poses": 86,
+          "hits": 0,
+          "hp": [
+            1,
+            1,
+            1,
+            1,
+            1,
+            1
+          ],
+          "encounter": 1,
+          "defeatEvents": 0,
+          "visibleFaces": 12,
+          "spans": 0,
+          "pixels": 0,
+          "shownBossAngle": 47,
+          "shownPrincipalY": 256,
+          "tilesRestored": 46861,
+          "solidTilesRestored": 20984,
+          "solidRowsRestored": 0,
+          "shownPlayerWorldX": -142,
+          "shownPlayerWorldZ": 120,
+          "shownPlayerScreenX": 97,
+          "shownPlayerScreenY": 172,
+          "shownPageTick": 2734,
+          "poseCompletedTicks": [
+            491,
+            2479,
+            2505,
+            2541,
+            2607,
+            2440,
+            2457
+          ]
+        },
+        "backgroundPixelsCompared": 196608,
+        "pagePixelsCompared": 262144,
+        "mismatches": 0,
+        "projection": {
+          "model": "part",
+          "vertices": 18,
+          "exactQ14Projection": true
+        },
+        "uniqueScreenColors": 28,
+        "opaqueObjects": [
+          {
+            "slot": 4,
+            "kind": 2,
+            "opaquePixels": 233
+          },
+          {
+            "slot": 3,
+            "kind": 2,
+            "opaquePixels": 150
+          },
+          {
+            "slot": 0,
+            "kind": 0,
+            "opaquePixels": 162
+          },
+          {
+            "slot": 5,
+            "kind": 2,
+            "opaquePixels": 47
+          },
+          {
+            "slot": 2,
+            "kind": 2,
+            "opaquePixels": 112
+          },
+          {
+            "slot": 6,
+            "kind": 2,
+            "opaquePixels": 144
+          },
+          {
+            "slot": 1,
+            "kind": 2,
+            "opaquePixels": 140
+          }
+        ],
+        "foregroundOrder": "far-to-near local objects; no per-pixel background depth mask",
+        "screenshot": "D:\\work\\X68000で何か作ろう\\prototypes\\axxphorg-rich\\build\\verification-1791194791688474900\\boss-hold.png"
+      },
+      {
+        "label": "boss-departure",
+        "state": {
+          "ready": 42330,
+          "tick": 5386,
+          "pages": 542,
+          "part": 5,
+          "sourceFrame": 13,
+          "backgroundIndex": 2,
+          "shownPart": 5,
+          "shownSourceFrame": 8,
+          "playerX": -142,
+          "playerZ": 120,
+          "keys": 0,
+          "shotsFired": 5,
+          "poses": 119,
+          "hits": 0,
+          "hp": [
+            1,
+            1,
+            1,
+            1,
+            1,
+            1
+          ],
+          "encounter": 1,
+          "defeatEvents": 0,
+          "visibleFaces": 12,
+          "spans": 0,
+          "pixels": 0,
+          "shownBossAngle": 260,
+          "shownPrincipalY": 256,
+          "tilesRestored": 98716,
+          "solidTilesRestored": 41773,
+          "solidRowsRestored": 0,
+          "shownPlayerWorldX": -142,
+          "shownPlayerWorldZ": 120,
+          "shownPlayerScreenX": 97,
+          "shownPlayerScreenY": 172,
+          "shownPageTick": 5386,
+          "poseCompletedTicks": [
+            491,
+            5245,
+            5316,
+            4919,
+            5011,
+            5098,
+            5173
+          ]
+        },
+        "backgroundPixelsCompared": 196608,
+        "pagePixelsCompared": 262144,
+        "mismatches": 0,
+        "projection": {
+          "model": "part",
+          "vertices": 18,
+          "exactQ14Projection": true
+        },
+        "uniqueScreenColors": 31,
+        "opaqueObjects": [
+          {
+            "slot": 3,
+            "kind": 2,
+            "opaquePixels": 327
+          },
+          {
+            "slot": 2,
+            "kind": 2,
+            "opaquePixels": 903
+          },
+          {
+            "slot": 0,
+            "kind": 0,
+            "opaquePixels": 162
+          },
+          {
+            "slot": 4,
+            "kind": 2,
+            "opaquePixels": 557
+          },
+          {
+            "slot": 1,
+            "kind": 2,
+            "opaquePixels": 5018
+          },
+          {
+            "slot": 5,
+            "kind": 2,
+            "opaquePixels": 2897
+          },
+          {
+            "slot": 6,
+            "kind": 2,
+            "opaquePixels": 10718
+          }
+        ],
+        "foregroundOrder": "far-to-near local objects; no per-pixel background depth mask",
+        "screenshot": "D:\\work\\X68000で何か作ろう\\prototypes\\axxphorg-rich\\build\\verification-1791194791688474900\\boss-departure.png"
+      },
+      {
+        "label": "stars-return",
+        "state": {
+          "ready": 42330,
+          "tick": 5774,
+          "pages": 603,
+          "part": 0,
+          "sourceFrame": 1,
+          "backgroundIndex": 0,
+          "shownPart": 0,
+          "shownSourceFrame": 0,
+          "playerX": -142,
+          "playerZ": 120,
+          "keys": 0,
+          "shotsFired": 5,
+          "poses": 135,
+          "hits": 0,
+          "hp": [
+            1,
+            1,
+            1,
+            1,
+            1,
+            1
+          ],
+          "encounter": 1,
+          "defeatEvents": 0,
+          "visibleFaces": 10,
+          "spans": 0,
+          "pixels": 0,
+          "shownBossAngle": 0,
+          "shownPrincipalY": 256,
+          "tilesRestored": 104548,
+          "solidTilesRestored": 45028,
+          "solidRowsRestored": 0,
+          "shownPlayerWorldX": -142,
+          "shownPlayerWorldZ": 120,
+          "shownPlayerScreenX": 97,
+          "shownPlayerScreenY": 172,
+          "shownPageTick": 5774,
+          "poseCompletedTicks": [
+            491,
+            5700,
+            5712,
+            5727,
+            5742,
+            5750,
+            5765
+          ]
+        },
+        "backgroundPixelsCompared": 196608,
+        "pagePixelsCompared": 262144,
+        "mismatches": 0,
+        "projection": {
+          "model": "part",
+          "vertices": 18,
+          "exactQ14Projection": true
+        },
+        "uniqueScreenColors": 18,
+        "opaqueObjects": [
+          {
+            "slot": 0,
+            "kind": 0,
+            "opaquePixels": 162
+          }
+        ],
+        "foregroundOrder": "far-to-near local objects; no per-pixel background depth mask",
+        "screenshot": "D:\\work\\X68000で何か作ろう\\prototypes\\axxphorg-rich\\build\\verification-1791194791688474900\\stars-return.png"
+      },
+      {
+        "label": "asteroids",
+        "state": {
+          "ready": 42330,
+          "tick": 6556,
+          "pages": 793,
+          "part": 1,
+          "sourceFrame": 74,
+          "backgroundIndex": 18,
+          "shownPart": 1,
+          "shownSourceFrame": 72,
+          "playerX": -142,
+          "playerZ": 120,
+          "keys": 0,
+          "shotsFired": 5,
+          "poses": 171,
+          "hits": 0,
+          "hp": [
+            1,
+            1,
+            1,
+            1,
+            1,
+            1
+          ],
+          "encounter": 1,
+          "defeatEvents": 0,
+          "visibleFaces": 15,
+          "spans": 0,
+          "pixels": 0,
+          "shownBossAngle": 32,
+          "shownPrincipalY": 256,
+          "tilesRestored": 114400,
+          "solidTilesRestored": 50500,
+          "solidRowsRestored": 0,
+          "shownPlayerWorldX": -142,
+          "shownPlayerWorldZ": 120,
+          "shownPlayerScreenX": 97,
+          "shownPlayerScreenY": 172,
+          "shownPageTick": 6556,
+          "poseCompletedTicks": [
+            491,
+            6540,
+            6455,
+            6485,
+            6509,
+            5750,
+            5765
+          ]
+        },
+        "backgroundPixelsCompared": 196608,
+        "pagePixelsCompared": 262144,
+        "mismatches": 0,
+        "projection": {
+          "model": "enemy",
+          "vertices": 26,
+          "exactQ14Projection": true
+        },
+        "uniqueScreenColors": 27,
+        "opaqueObjects": [
+          {
+            "slot": 1,
+            "kind": 1,
+            "opaquePixels": 5647
+          },
+          {
+            "slot": 4,
+            "kind": 1,
+            "opaquePixels": 81
+          },
+          {
+            "slot": 3,
+            "kind": 1,
+            "opaquePixels": 110
+          },
+          {
+            "slot": 0,
+            "kind": 0,
+            "opaquePixels": 162
+          },
+          {
+            "slot": 2,
+            "kind": 1,
+            "opaquePixels": 188
+          }
+        ],
+        "foregroundOrder": "far-to-near local objects; no per-pixel background depth mask",
+        "screenshot": "D:\\work\\X68000で何か作ろう\\prototypes\\axxphorg-rich\\build\\verification-1791194791688474900\\asteroids.png"
+      }
+    ],
+    "classification": "Owned shared-host bounded execution; software mailbox input; not physical keys/hardware"
+  },
+  "sharedInstance": {
+    "checkedAt": "2026-10-05T19:29:55.001491+09:00",
+    "pid": 12052,
+    "version": "0.4.0-preview.31",
+    "executable": "D:\\work\\DevelopTools\\Emulators\\Champon8\\private\\snes-exhirom-msu1-20261004\\配布確定 検証\\Champon8-0.4.0-preview.31-win-x64\\Champon8.exe",
+    "executableSha256": "52614656c9a0e4953f8f30e1cbcceee59e381632bb1a1433e92726d5e507769c",
+    "workspaceId": "bca72ca874fa467fbd87d20ed418c48b",
+    "handle": "axx-r20261005-x68000",
+    "instanceId": "6fbf95f4bcc241aba094e4e49c861f51"
+  },
+  "displayRunningAtReport": true,
+  "normalInput": {
+    "nativeChampon8Keyboard": "unconnected / unverified",
+    "physicalX68000": "unverified",
+    "ownerBrowserControls": "Normal owned localhost UI controls operated and actual guest captures recorded",
+    "uiEvidence": {
+      "path": "D:\\work\\X68000で何か作ろう\\prototypes\\axxphorg-rich\\build\\QUALITY02-UI.json",
+      "bytes": 89383,
+      "sha256": "badbfb83f7e6fe800e8c0397e3ec3f1e5fa5fa2f343692d74fe77ab552af679d"
+    },
+    "observations": [
+      {
+        "label": "boss-neutral",
+        "running": true,
+        "shownHeroCenters": [
+          [
+            256,
+            298
+          ]
+        ],
+        "keys": [
+          0
+        ],
+        "shotsRange": [
+          10,
+          10
+        ]
+      },
+      {
+        "label": "boss-right-held",
+        "running": true,
+        "shownHeroCenters": [
+          [
+            415,
+            298
+          ]
+        ],
+        "keys": [
+          2
+        ],
+        "shotsRange": [
+          10,
+          10
+        ]
+      },
+      {
+        "label": "right-released",
+        "running": true,
+        "shownHeroCenters": [
+          [
+            415,
+            298
+          ]
+        ],
+        "keys": [
+          0
+        ],
+        "shotsRange": [
+          10,
+          10
+        ]
+      },
+      {
+        "label": "stars-left-fire-held",
+        "running": true,
+        "shownHeroCenters": [
+          [
+            97,
+            298
+          ]
+        ],
+        "keys": [
+          17
+        ],
+        "shotsRange": [
+          58,
+          58
+        ]
+      },
+      {
+        "label": "left-fire-released",
+        "running": true,
+        "shownHeroCenters": [
+          [
+            97,
+            298
+          ]
+        ],
+        "keys": [
+          0
+        ],
+        "shotsRange": [
+          79,
+          79
+        ]
+      },
+      {
+        "label": "next-scene-request",
+        "running": true,
+        "shownHeroCenters": [
+          [
+            97,
+            298
+          ]
+        ],
+        "keys": [
+          32
+        ],
+        "shotsRange": [
+          79,
+          79
+        ]
+      },
+      {
+        "label": "scene-request-released",
+        "running": true,
+        "shownHeroCenters": [
+          [
+            97,
+            298
+          ]
+        ],
+        "keys": [
+          0
+        ],
+        "shotsRange": [
+          79,
+          79
+        ]
+      }
+    ],
+    "limit": "Long UI holds reached viewport clamps. The separate finite comparison verifies released settling away from the clamp; do not treat browser input as native hardware input."
+  },
+  "workflow": {
+    "delivered": true,
+    "implementation": true,
+    "ownerVerification": true,
+    "coordinatorVerification": false,
+    "userAcceptance": false,
+    "playablePerformanceAccepted": false,
+    "centralRegistryChanged": false,
+    "messagesSent": false,
+    "preservationPublicationCommit": "878c6aa2213b0295e69a4cd1f788bf09737ef905",
+    "inventorySupplementPublicationCommit": "89253a831d2d5913679790d00fdbf7531d86ac37",
+    "currentQualityPublication": "Separate explicitly staged checkpoint; report records pre-publication parent SHA, not a circular self-commit hash"
+  },
+  "sameClockInputComparison": {
+    "before": {
+      "path": "D:\\work\\X68000で何か作ろう\\prototypes\\axxphorg-rich\\build\\quality02-before-1791191125095273000\\result.json",
+      "bytes": 114442,
+      "sha256": "d65b1a041a3e8b5d871aefeb63f5236defbf556f4452594ccba0fe3ad9672f40"
+    },
+    "after": {
+      "path": "D:\\work\\X68000で何か作ろう\\prototypes\\axxphorg-rich\\build\\quality02-after-1791195203997732800\\result.json",
+      "bytes": 178664,
+      "sha256": "0749dd6fb1403115bcebca47fc724cc2cf96308cab019508aec437675b654f26"
+    },
+    "workload": {
+      "playerStart": [
+        0,
+        -30
+      ],
+      "heldTicks": 32,
+      "releasedTicks": 32,
+      "starsStartAbsoluteTick": 512,
+      "otherScenesStartElapsedTick": 224,
+      "phaseTimeCameraHpInjection": false,
+      "nativeKeyboard": false
+    },
+    "windows": [
+      {
+        "scene": "stars",
+        "beforeFirstVisibleMovementMilliseconds": {
+          "right": 348.6737,
+          "left": 327.0304999999998
+        },
+        "afterFirstVisibleMovementMilliseconds": {
+          "right": 220.82060000000004,
+          "left": 58.56820000000007
+        },
+        "releaseVisibleSettlesBothVersions": true,
+        "beforeRecording": {
+          "path": "D:\\work\\X68000で何か作ろう\\prototypes\\axxphorg-rich\\build\\quality02-before-1791191125095273000\\stars\\continuous.gif",
+          "bytes": 32381,
+          "sha256": "0c9414fe26f743e6a4d592e3ca5bcd18e44e6ff10e58b7cdda19c6cd585ff394"
+        },
+        "afterRecording": {
+          "path": "D:\\work\\X68000で何か作ろう\\prototypes\\axxphorg-rich\\build\\quality02-after-1791195203997732800\\stars\\continuous.gif",
+          "bytes": 58747,
+          "sha256": "141bfafa7eadd72cb3a4671b146921ffbc080c864db68a9e7c43d7a0491f1493"
+        }
+      },
+      {
+        "scene": "battleship",
+        "beforeFirstVisibleMovementMilliseconds": {
+          "right": 239.86740000000006,
+          "left": 289.9160999999999
+        },
+        "afterFirstVisibleMovementMilliseconds": {
+          "right": 188.65550000000007,
+          "left": 218.70040000000012
+        },
+        "releaseVisibleSettlesBothVersions": true,
+        "beforeRecording": {
+          "path": "D:\\work\\X68000で何か作ろう\\prototypes\\axxphorg-rich\\build\\quality02-before-1791191125095273000\\battleship\\continuous.gif",
+          "bytes": 84954,
+          "sha256": "7e0aeaf30a01bd075538a796e41f9a39c8b97481aa0803fcdfd2e4aaa697f9b3"
+        },
+        "afterRecording": {
+          "path": "D:\\work\\X68000で何か作ろう\\prototypes\\axxphorg-rich\\build\\quality02-after-1791195203997732800\\battleship\\continuous.gif",
+          "bytes": 81030,
+          "sha256": "1398508dc35fc251baa191befb06bfc5a3abb8474fcbe91741fe4462b22a78b0"
+        }
+      },
+      {
+        "scene": "boss",
+        "beforeFirstVisibleMovementMilliseconds": {
+          "right": 833.5645,
+          "left": 1225.9304
+        },
+        "afterFirstVisibleMovementMilliseconds": {
+          "right": 154.35299999999995,
+          "left": 402.2133999999999
+        },
+        "releaseVisibleSettlesBothVersions": true,
+        "beforeRecording": {
+          "path": "D:\\work\\X68000で何か作ろう\\prototypes\\axxphorg-rich\\build\\quality02-before-1791191125095273000\\boss\\continuous.gif",
+          "bytes": 50237,
+          "sha256": "9418eb9cfc74e771dd2f958d2f8ce9793133891da2c4dba4448188a7dc2931ec"
+        },
+        "afterRecording": {
+          "path": "D:\\work\\X68000で何か作ろう\\prototypes\\axxphorg-rich\\build\\quality02-after-1791195203997732800\\boss\\continuous.gif",
+          "bytes": 74211,
+          "sha256": "4ba91a1b4d07b269adbaee6b49ef730cbaa3122a71830e8ff10050a53e1bbf7c"
+        }
+      }
+    ],
+    "classification": "Natural held->visible motion->release recordings of actual guest frames; nominal cycles, not wall/physical timing. No scene/time/camera/HP injection. Input is software mailbox only."
+  }
+}
